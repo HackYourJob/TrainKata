@@ -1,3 +1,6 @@
+import java.util.List;
+import java.util.Map;
+
 public class TrainTopologies {
     public static String With_10_available_seats()
     {
@@ -104,7 +107,7 @@ public class TrainTopologies {
                 "\"1F\": {\"booking_reference\": \"75bcd19\", \"seat_number\": \"1\", \"coach\": \"F\"}, " +
                 "\"2F\": {\"booking_reference\": \"\", \"seat_number\": \"2\", \"coach\": \"F\"}, " +
                 "\"1G\": {\"booking_reference\": \"75bcd19\", \"seat_number\": \"1\", \"coach\": \"G\"}, " +
-                "\"2G\": {\"booking_reference\": \"\", \"seat_number\": \"2\", \"coach\": \"G\"}, " +
+                "\"2G\": {\"booking_reference\": \"\", \"seat_number\": \"2\", \"coach\": \"G\"} " +
                 "}}";
     }
 }
