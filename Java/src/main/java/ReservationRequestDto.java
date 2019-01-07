@@ -1,9 +1,9 @@
 
-public class ReservationRequest {
+public class ReservationRequestDto {
 	public final String trainId;
     public final int seatCount;
 
-    public ReservationRequest(String trainId, int seatCount) {
+    public ReservationRequestDto(String trainId, int seatCount) {
 		this.trainId = trainId;
         this.seatCount = seatCount;
     }
