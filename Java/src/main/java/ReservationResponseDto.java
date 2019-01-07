@@ -11,4 +11,12 @@ public class ReservationResponseDto {
         this.seats = seats;
     }
 
+    @Override
+    public String toString() {
+        return "ReservationResponseDto{" +
+                "trainId='" + trainId + '\'' +
+                ", bookingId='" + bookingId + '\'' +
+                ", seats=" + seats +
+                '}';
+    }
 }
