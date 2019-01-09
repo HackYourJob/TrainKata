@@ -1,7 +1,4 @@
-import com.google.gson.Gson;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
@@ -13,11 +10,11 @@ public class TicketOfficeService {
         this.bookingReferenceClient = bookingReferenceClient;
     }
 
-    public String makeReservation(ReservationRequestDto request) {
-        String data = trainDataClient.getTopology(request.trainId);
+    public ReservationResponseDto makeReservation(ReservationRequestDto request) {
+        Topologie topologie = trainDataClient.getTopology(request.trainId);
 
         Map<String, List<Topologie.TopologieSeat>> map = new HashMap<>();
-        for (Topologie.TopologieSeat x : new Gson().fromJson(data, Topologie.class).seats.values()) {
+        for (Topologie.TopologieSeat x : topologie.seats.values()) {
             map.computeIfAbsent(x.coach, k -> new ArrayList<>()).add(x);
         }
         Map.Entry<String, List<Topologie.TopologieSeat>> found = null;
@@ -34,7 +31,7 @@ public class TicketOfficeService {
             }
         }
         List<Seat> seats = new ArrayList<>();
-        if(found != null) {
+        if (found != null) {
             List<Seat> list = new ArrayList<>();
             long limit = request.seatCount;
             for (Topologie.TopologieSeat y : found.getValue()) {
@@ -47,15 +44,10 @@ public class TicketOfficeService {
             seats = list;
         }
 
-        if (!seats.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, seats, bookingReferenceClient.generateBookingReference());
-            return "{" +
-                    "\"train_id\": \"" + reservation.trainId + "\", " +
-                    "\"booking_reference\": \"" + reservation.bookingId + "\", " +
-                    "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
-                    "}";
-        } else {
-            return "{\"train_id\": \"" + request.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
+        if (seats.isEmpty()) {
+            return new ReservationResponseDto(request.trainId, new ArrayList<>(), "");
         }
+        String bookingId = bookingReferenceClient.generateBookingReference();
+        return new ReservationResponseDto(request.trainId, seats, bookingId);
     }
 }

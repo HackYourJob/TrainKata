@@ -1,3 +1,3 @@
 public interface TrainDataClient {
-    String getTopology(String trainId);
+    Topologie getTopology(String trainId);
 }
