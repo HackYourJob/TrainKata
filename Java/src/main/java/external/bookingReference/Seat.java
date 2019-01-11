@@ -1,3 +1,4 @@
+package external.bookingReference;
 
 public class Seat {
     public final String coach;

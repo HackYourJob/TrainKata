@@ -1,4 +1,13 @@
-import java.util.*;
+import external.bookingReference.BookingReferenceClient;
+import external.trainData.Topologie;
+import external.trainData.TrainDataClient;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
@@ -11,43 +20,35 @@ public class TicketOfficeService {
     }
 
     public ReservationResponseDto makeReservation(ReservationRequestDto request) {
-        Topologie topologie = trainDataClient.getTopology(request.trainId);
+        Topologie topology = this.trainDataClient.getTopology(request.trainId);
 
-        Map<String, List<Topologie.TopologieSeat>> map = new HashMap<>();
-        for (Topologie.TopologieSeat x : topologie.seats.values()) {
-            map.computeIfAbsent(x.coach, k -> new ArrayList<>()).add(x);
-        }
-        Map.Entry<String, List<Topologie.TopologieSeat>> found = null;
-        for (Map.Entry<String, List<Topologie.TopologieSeat>> x : map.entrySet()) {
-            long count = 0L;
-            for (Topologie.TopologieSeat y : x.getValue()) {
-                if ("".equals(y.booking_reference)) {
-                    count++;
-                }
-            }
-            if (count >= request.seatCount) {
-                found = x;
-                break;
-            }
-        }
-        List<Seat> seats = new ArrayList<>();
-        if (found != null) {
-            List<Seat> list = new ArrayList<>();
-            long limit = request.seatCount;
-            for (Topologie.TopologieSeat y : found.getValue()) {
-                if ("".equals(y.booking_reference)) {
-                    if (limit-- == 0) break;
-                    Seat seat = new Seat(y.coach, y.seat_number);
-                    list.add(seat);
-                }
-            }
-            seats = list;
-        }
+        // TODO
+        // - Règle de validation des 70%
+        // - Wrapper Topologie en classe métier Train+Coach+seat qui contiendront les règles métier
+        // - Séparer le code du domaine du code d'infra (Archi Hexa)
 
-        if (seats.isEmpty()) {
-            return new ReservationResponseDto(request.trainId, new ArrayList<>(), "");
+        Map<String, List<Topologie.TopologieSeat>> seatsByCoach = topology.seats.keySet()
+                .stream()
+                .map(seatId -> topology.seats.get(seatId))
+                .collect(Collectors.groupingBy(Topologie.TopologieSeat::getCoach));
+
+        Optional<List<Topologie.TopologieSeat>> elegibleCoach = seatsByCoach.values().stream()
+                .filter(seatsList -> seatsList.stream()
+                        .filter(Topologie.TopologieSeat::isAvailable).count() >= request.seatCount)
+                .findFirst();
+
+        if(elegibleCoach.isPresent()) {
+            List<ReservationResponseDto.Seat> seats = elegibleCoach.get().stream()
+                    .filter(Topologie.TopologieSeat::isAvailable)
+                    .limit(request.seatCount)
+                    .map(topologieSeat -> new ReservationResponseDto.Seat(topologieSeat.coach, topologieSeat.seat_number))
+                    .collect(Collectors.toList());
+
+            String bookingReference = bookingReferenceClient.generateBookingReference();
+
+            return new ReservationResponseDto(request.trainId, seats, bookingReference);
         }
-        String bookingId = bookingReferenceClient.generateBookingReference();
-        return new ReservationResponseDto(request.trainId, seats, bookingId);
+        return new ReservationResponseDto(request.trainId, new ArrayList<>(), "");
+
     }
 }

@@ -19,4 +19,15 @@ public class ReservationResponseDto {
                 ", seats=" + seats +
                 '}';
     }
+
+    public static class Seat {
+        public final String coach;
+        public final int seatNumber;
+
+        public Seat(String coach, int seatNumber) {
+            this.coach = coach;
+            this.seatNumber = seatNumber;
+        }
+
+    }
 }

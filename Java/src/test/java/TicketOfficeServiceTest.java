@@ -1,4 +1,8 @@
 import com.google.gson.Gson;
+import external.bookingReference.BookingReferenceClient;
+import external.bookingReference.Seat;
+import external.trainData.Topologie;
+import external.trainData.TrainDataClient;
 import org.junit.*;
 
 import java.util.List;
@@ -28,6 +32,17 @@ public class TicketOfficeServiceTest {
         String reservation = makeReservation(seatsRequestedCount, trainDataService);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \"\", \"seats\": []}", reservation);
+    }
+
+    @Test
+    public void Reserve_seats_that_are_not_booked()
+    {
+        int seatsRequestedCount = 1;
+        TicketOfficeService trainDataService = buildTicketOfficeService(TrainTopologies.With_10_seats_and_6_already_reserved());
+
+        String reservation = makeReservation(seatsRequestedCount, trainDataService);
+
+        Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \""+ BookingReference +"\", \"seats\": [\"7A\"]}", reservation);
     }
 
     @Test
