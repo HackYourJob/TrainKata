@@ -1,4 +1,4 @@
-package domain;
+package domain.train;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,10 +21,17 @@ public class Coach {
                 .sorted(Comparator.comparing(Seat::sorter))
                 .limit(seatCount)
                 .collect(Collectors.toList());
+
         if (seat.size() == seatCount) {
             return Optional.of(seat);
         } else {
             return Optional.empty();
         }
+    }
+
+    public enum SeatStatus {
+        AVAILABLE,
+        ALREADY_BOOKED;
+
     }
 }

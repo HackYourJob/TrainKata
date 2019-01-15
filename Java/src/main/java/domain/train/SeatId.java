@@ -1,4 +1,4 @@
-package domain;
+package domain.train;
 
 public class SeatId {
     public int seat_number;
@@ -10,7 +10,4 @@ public class SeatId {
         this.coachId = coachId;
     }
 
-    public String getSeatId() {
-        return coachId + seat_number;
-    }
 }

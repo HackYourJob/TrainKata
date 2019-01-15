@@ -1,6 +1,6 @@
-package domain;
+package domain.in;
 
-import domain.in.TrainId;
+import domain.train.TrainId;
 
 public class TrainReservationFailure implements TrainReservationResult {
     public final TrainId trainId;

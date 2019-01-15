@@ -1,6 +1,7 @@
-package domain;
+package domain.in;
 
-import domain.in.TrainId;
+import domain.train.Seat;
+import domain.train.TrainId;
 
 import java.util.List;
 import java.util.stream.Collectors;

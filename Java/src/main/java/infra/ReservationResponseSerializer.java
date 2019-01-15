@@ -1,8 +1,8 @@
 package infra;
 
-import domain.TrainReservationFailure;
-import domain.TrainReservationResult;
-import domain.TrainReservationSuccess;
+import domain.in.TrainReservationFailure;
+import domain.in.TrainReservationResult;
+import domain.in.TrainReservationSuccess;
 
 public class ReservationResponseSerializer {
     public String serialize(TrainReservationResult trainReservationResult) {

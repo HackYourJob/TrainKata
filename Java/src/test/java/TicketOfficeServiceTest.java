@@ -1,11 +1,10 @@
 import com.google.gson.Gson;
-import domain.Topologie;
-import domain.TrainReservationResult;
+import domain.train.Topologie;
+import domain.in.TrainReservationResult;
 import domain.in.MakeReservation;
-import domain.in.TrainId;
+import domain.train.TrainId;
 import domain.out.BookingReferenceClient;
 import domain.out.TrainDataClient;
-import infra.ReservationRequestDto;
 import infra.ReservationResponseSerializer;
 import infra.Seat;
 import org.junit.*;
@@ -118,7 +117,7 @@ public class TicketOfficeServiceTest {
         }
 
         @Override
-        public Topologie getTopology(domain.in.TrainId trainId) {
+        public Topologie getTopology(domain.train.TrainId trainId) {
             return new Gson().fromJson(topologies, Topologie.class);
         }
     }

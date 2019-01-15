@@ -1,4 +1,4 @@
-package domain.in;
+package domain.train;
 
 public class TrainId {
     public final String trainId;

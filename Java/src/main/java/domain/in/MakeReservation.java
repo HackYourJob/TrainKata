@@ -1,6 +1,9 @@
 package domain.in;
 
-import domain.*;
+import domain.train.Seat;
+import domain.train.Topologie;
+import domain.train.Train;
+import domain.train.TrainId;
 import domain.out.BookingReferenceClient;
 import domain.out.TrainDataClient;
 

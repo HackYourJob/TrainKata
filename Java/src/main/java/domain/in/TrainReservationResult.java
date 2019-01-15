@@ -1,4 +1,4 @@
-package domain;
+package domain.in;
 
 public interface TrainReservationResult {
 }

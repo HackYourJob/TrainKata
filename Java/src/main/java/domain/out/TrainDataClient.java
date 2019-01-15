@@ -1,7 +1,7 @@
 package domain.out;
 
-import domain.Topologie;
-import domain.in.TrainId;
+import domain.train.Topologie;
+import domain.train.TrainId;
 
 public interface TrainDataClient {
     Topologie getTopology(TrainId trainId);

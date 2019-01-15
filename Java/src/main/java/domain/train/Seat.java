@@ -1,4 +1,4 @@
-package domain;
+package domain.train;
 
 public class Seat {
     public final String coach;
