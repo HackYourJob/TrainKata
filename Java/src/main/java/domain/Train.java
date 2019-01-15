@@ -15,9 +15,10 @@ public class Train {
 
     public Train(Topologie topologie) {
         this.topologie = topologie;
+        //topologie.seats.
         Collection<List<Topologie.TopologieSeat>> rawCoaches = topologie.seats.values().stream()
                 .collect(Collectors.groupingBy(topologieSeat -> topologieSeat.coach)).values();
-        rawCoaches.forEach(c -> this.coaches.add(new Coach(c)));
+        rawCoaches.forEach(c -> this.coaches.add(new Coach(c, c.get(0).coach)));
     }
 
     public Optional<List<Seat>> findAvailableSeats(int seatCount) {

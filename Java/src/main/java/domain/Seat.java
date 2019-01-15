@@ -2,11 +2,15 @@ package domain;
 
 public class Seat {
     public final String coach;
-    public final SeatId seatNumber;
+    public final int seatNumber;
 
-    public Seat(String coach, SeatId seatNumber) {
+    public Seat(String coach, int seatNumber) {
         this.coach = coach;
         this.seatNumber = seatNumber;
+    }
+
+    public int sorter() {
+        return seatNumber;
     }
 
     public boolean equals(Object o) {

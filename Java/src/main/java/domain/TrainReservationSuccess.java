@@ -13,6 +13,8 @@ public class TrainReservationSuccess implements TrainReservationResult {
     public TrainReservationSuccess(TrainId trainId, String bookingId, List<Seat> seats) {
         this.trainId = trainId;
         this.bookingId = bookingId;
-        this.seats = seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", "));
+        this.seats = seats.stream()
+                .map(s -> "\"" + s.seatNumber + s.coach + "\"")
+                .collect(Collectors.joining(", "));
     }
 }

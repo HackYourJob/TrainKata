@@ -1,10 +1,16 @@
 package domain;
 
 public class SeatId {
-    private int seat_number;
+    public int seat_number;
+    private final String coachId;
 
-    public SeatId(int seat_number) {
 
+    public SeatId(int seat_number, String coachId) {
         this.seat_number = seat_number;
+        this.coachId = coachId;
+    }
+
+    public String getSeatId() {
+        return coachId + seat_number;
     }
 }
