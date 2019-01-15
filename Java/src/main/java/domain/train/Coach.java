@@ -5,12 +5,13 @@ import java.util.stream.Collectors;
 
 public class Coach {
 
+    // TODO: 15/01/19 Wrap Primitive into CoachId
     private final String coachId;
     private Map<SeatId, SeatStatus> seats = new HashMap<>();
 
     public Coach(List<Topologie.TopologieSeat> seats, String coachId) {
         this.coachId = coachId;
-        seats.forEach(seat -> this.seats.put(new SeatId(seat.seat_number, coachId), "".equals(seat.booking_reference) ? SeatStatus.AVAILABLE : SeatStatus.ALREADY_BOOKED));
+        seats.forEach(seat -> this.seats.put(new SeatId(seat.seat_number), "".equals(seat.booking_reference) ? SeatStatus.AVAILABLE : SeatStatus.ALREADY_BOOKED));
     }
 
     public Optional<List<Seat>> tryToReserve(int seatCount) {
