@@ -1,10 +1,14 @@
+import domain.TrainReservationResult;
+import domain.in.MakeReservation;
+import domain.in.TrainId;
+import domain.out.BookingReferenceClient;
+import domain.out.TrainDataClient;
+import infra.ReservationRequestDto;
+import infra.ReservationResponseSerializer;
+import infra.Seat;
 import org.junit.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.*;
 
 public class TicketOfficeServiceTest {
     private static final String TrainId = "9043-2018-05-24";
@@ -14,20 +18,25 @@ public class TicketOfficeServiceTest {
     public void Reserve_seats_when_train_is_empty()
     { 
         int seatsRequestedCount = 3;
-        TicketOfficeService service = buildTicketOfficeService(TrainTopologies.With_10_available_seats());
+        MakeReservation service = buildTicketOfficeService(TrainTopologies.With_10_available_seats());
         
-        String reservation = service.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, service);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \""+ BookingReference +"\", \"seats\": [\"1A\", \"2A\", \"3A\"]}", reservation);
+    }
+
+    private String makeReservation(int seatsRequestedCount, MakeReservation service) {
+        TrainReservationResult trainReservationResult = service.execute(new TrainId(TrainId), seatsRequestedCount);
+        return new ReservationResponseSerializer().serialize(trainReservationResult);
     }
 
     @Test
     public void Not_reserve_seats_when_not_enough_free_place()
     {
         int seatsRequestedCount = 5;
-        TicketOfficeService trainDataService = buildTicketOfficeService(TrainTopologies.With_10_seats_and_6_already_reserved());
+        MakeReservation trainDataService = buildTicketOfficeService(TrainTopologies.With_10_seats_and_6_already_reserved());
 
-        String reservation = trainDataService.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, trainDataService);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \"\", \"seats\": []}", reservation);
     }
@@ -36,9 +45,9 @@ public class TicketOfficeServiceTest {
     public void Reserve_seats_when_one_coach_is_full_and_one_is_empty()
     {
         int seatsRequestedCount = 3;
-        TicketOfficeService trainDataService = buildTicketOfficeService(TrainTopologies.With_2_coaches_and_the_first_coach_is_full());
+        MakeReservation trainDataService = buildTicketOfficeService(TrainTopologies.With_2_coaches_and_the_first_coach_is_full());
 
-        String reservation = trainDataService.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, trainDataService);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \""+ BookingReference +"\", \"seats\": [\"1B\", \"2B\", \"3B\"]}", reservation);
     }
@@ -47,9 +56,9 @@ public class TicketOfficeServiceTest {
     public void Reserve_all_seats_in_the_same_coach()
     {
         int seatsRequestedCount = 2;
-        TicketOfficeService trainDataService = buildTicketOfficeService(TrainTopologies.With_2_coaches_and_9_seats_already_reserved_in_the_first_coach());
+        MakeReservation trainDataService = buildTicketOfficeService(TrainTopologies.With_2_coaches_and_9_seats_already_reserved_in_the_first_coach());
 
-        String reservation = trainDataService.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, trainDataService);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \""+ BookingReference +"\", \"seats\": [\"1B\", \"2B\"]}", reservation);
     }
@@ -58,9 +67,9 @@ public class TicketOfficeServiceTest {
     public void Cannot_Reserve_When_Train_Is_Not_Full_But_Not_Coach_Is_Available()
     {
         int seatsRequestedCount = 2;
-        TicketOfficeService trainDataService = buildTicketOfficeService(TrainTopologies.With_10_coaches_half_available());
+        MakeReservation trainDataService = buildTicketOfficeService(TrainTopologies.With_10_coaches_half_available());
 
-        String reservation = trainDataService.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, trainDataService);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \"\", \"seats\": []}", reservation);
     }
@@ -70,16 +79,16 @@ public class TicketOfficeServiceTest {
     public void Not_reserve_seats_when_it_exceed_max_capacity_threshold()
     {
         int seatsRequestedCount = 3;
-        TicketOfficeService service = buildTicketOfficeService(TrainTopologies.With_10_seats_and_6_already_reserved());
+        MakeReservation service = buildTicketOfficeService(TrainTopologies.With_10_seats_and_6_already_reserved());
 
-        String reservation = service.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+        String reservation = makeReservation(seatsRequestedCount, service);
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \"\", \"seats\": []}", reservation);
     }
 
-    private static TicketOfficeService buildTicketOfficeService(String topologies)
+    private static MakeReservation buildTicketOfficeService(String topologies)
     {
-        return new TicketOfficeService(new TrainDataClientStub(topologies), new BookingReferenceClientStub(BookingReference));
+        return new MakeReservation(new TrainDataClientStub(topologies), new BookingReferenceClientStub(BookingReference));
     }
 
     private static class BookingReferenceClientStub implements BookingReferenceClient {
@@ -107,7 +116,7 @@ public class TicketOfficeServiceTest {
         }
 
         @Override
-        public String getTopology(String trainId) {
+        public String getTopology(domain.in.TrainId trainId) {
             return this.topologies;
         }
     }
