@@ -1,4 +1,4 @@
-package domain.train;
+package domain.out;
 
 import java.util.Map;
 

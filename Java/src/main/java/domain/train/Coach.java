@@ -1,5 +1,7 @@
 package domain.train;
 
+import domain.out.Topologie;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

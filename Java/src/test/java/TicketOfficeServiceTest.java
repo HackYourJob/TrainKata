@@ -1,5 +1,5 @@
 import com.google.gson.Gson;
-import domain.train.Topologie;
+import domain.out.Topologie;
 import domain.in.TrainReservationResult;
 import domain.in.MakeReservation;
 import domain.train.TrainId;

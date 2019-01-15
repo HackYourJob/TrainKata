@@ -1,7 +1,7 @@
 package domain.in;
 
 import domain.train.Seat;
-import domain.train.Topologie;
+import domain.out.Topologie;
 import domain.train.Train;
 import domain.train.TrainId;
 import domain.out.BookingReferenceClient;
