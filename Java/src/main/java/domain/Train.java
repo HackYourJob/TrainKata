@@ -1,7 +1,6 @@
 package domain;
 
 import com.google.gson.Gson;
-import domain.out.Topology;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,17 +9,14 @@ import java.util.stream.Collectors;
 public class Train {
 
     List<Coach> coaches;
-    private String topology;
+    private Topologie topologie;
 
-    public Train(String topology) {
-        this.topology = topology;
+    public Train(Topologie topologie) {
+        this.topologie = topologie;
     }
 
-
     public List<Seat> findAvailableSeats(int seatCount) {
-        Topologie itemWithOwner = new Gson().fromJson(topology, Topologie.class);
-
-        return itemWithOwner.seats.values().stream()
+        return topologie.seats.values().stream()
                 .collect(Collectors.groupingBy(topologieSeat -> topologieSeat.coach)).entrySet().stream()
                 .filter(coach -> coach.getValue().stream()
                         .filter(s -> "".equals(s.booking_reference))

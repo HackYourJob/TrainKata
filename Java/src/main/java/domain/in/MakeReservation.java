@@ -2,7 +2,6 @@ package domain.in;
 
 import domain.*;
 import domain.out.BookingReferenceClient;
-import domain.out.Topology;
 import domain.out.TrainDataClient;
 
 import java.util.List;
@@ -17,7 +16,7 @@ public class MakeReservation {
     }
 
     public TrainReservationResult execute(TrainId trainId, int nbSeats) {
-        String topology = trainDataClient.getTopology(trainId);
+        Topologie topology = trainDataClient.getTopology(trainId);
 
         Train train = new Train(topology);
 
