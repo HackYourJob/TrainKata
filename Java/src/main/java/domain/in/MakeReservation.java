@@ -5,6 +5,7 @@ import domain.out.BookingReferenceClient;
 import domain.out.TrainDataClient;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MakeReservation {
     private TrainDataClient trainDataClient;
@@ -20,12 +21,10 @@ public class MakeReservation {
 
         Train train = new Train(topology);
 
-        List<Seat> availableSeats = train.findAvailableSeats(nbSeats);
+        Optional<List<Seat>> availableSeats = train.findAvailableSeats(nbSeats);
 
-        if (availableSeats.isEmpty()) {
-            return new TrainReservationFailure(trainId);
-        }
-
-        return new TrainReservationSuccess(trainId, bookingReferenceClient.generateBookingReference(), availableSeats);
+        return availableSeats
+                .map(seats -> (TrainReservationResult) new TrainReservationSuccess(trainId, bookingReferenceClient.generateBookingReference(), seats))
+                .orElse(new TrainReservationFailure(trainId));
     }
 }

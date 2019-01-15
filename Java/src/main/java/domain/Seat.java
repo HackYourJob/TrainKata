@@ -2,9 +2,9 @@ package domain;
 
 public class Seat {
     public final String coach;
-    public final int seatNumber;
+    public final SeatId seatNumber;
 
-    public Seat(String coach, int seatNumber) {
+    public Seat(String coach, SeatId seatNumber) {
         this.coach = coach;
         this.seatNumber = seatNumber;
     }
