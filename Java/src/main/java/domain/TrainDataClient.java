@@ -1,7 +1,7 @@
 package domain;
 
-import infra.out.Topologie;
+import java.util.List;
 
 public interface TrainDataClient {
-    Topologie getTopology(String trainId);
+    List<Seat> getTopology(String trainId);
 }

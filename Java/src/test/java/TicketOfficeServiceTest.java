@@ -1,15 +1,18 @@
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import com.google.gson.Gson;
+
 import domain.BookingReferenceClient;
-import infra.out.Seat;
-import infra.out.Topologie;
+import domain.Seat;
 import domain.TrainDataClient;
 import infra.in.ReservationRequestDto;
 import infra.in.ReservationResponseDto;
-
-import org.junit.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import infra.out.Topologie;
 
 public class TicketOfficeServiceTest {
     private static final String TrainId = "9043-2018-05-24";
@@ -133,8 +136,9 @@ public class TicketOfficeServiceTest {
         }
 
         @Override
-        public Topologie getTopology(String trainId) {
-            return new Gson().fromJson(this.topologies, Topologie.class);
+        public List<Seat> getTopology(String trainId) {
+            Topologie topologie = new Gson().fromJson(this.topologies, Topologie.class);
+            return topologie.seats.values().stream().map(topologieSeat -> new Seat(topologieSeat.coach, topologieSeat.seat_number, topologieSeat.booking_reference)).collect(Collectors.toList());
         }
     }
 }

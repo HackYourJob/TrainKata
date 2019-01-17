@@ -1,5 +1,7 @@
 package domain;
 
+import java.util.List;
+
 public class MakeReservation {
     private TrainDataClient trainDataClient;
 
@@ -8,7 +10,7 @@ public class MakeReservation {
     }
 
     public Reservation execute(String trainId, int seatCount){
-//        Topologie topology = trainDataClient.getTopology(trainId);
+        List<Seat> seats = trainDataClient.getTopology(trainId);
 //
 //        Train train = new Train(topology);
 

@@ -1,14 +1,16 @@
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import domain.BookingReferenceClient;
-import infra.out.Topologie;
+import domain.Seat;
 import domain.TrainDataClient;
 import infra.in.ReservationRequestDto;
 import infra.in.ReservationResponseDto;
+import infra.out.Topologie;
 
 public class TicketOfficeService {
 
@@ -26,9 +28,12 @@ public class TicketOfficeService {
      * // - Séparer le code du domaine du code d'infra (Archi Hexa)
      */
     public ReservationResponseDto makeReservation(ReservationRequestDto request) {
-        Topologie topology = this.trainDataClient.getTopology(request.trainId);
+        List<Seat> trainSeats = this.trainDataClient.getTopology(request.trainId);
 
-        Optional<List<Topologie.TopologieSeat>> elegibleCoach = findEligibleCoach(request, topology);
+        Topologie topologie = new Topologie();
+        topologie.seats = new LinkedHashMap<>();
+        trainSeats.forEach(seat -> topologie.seats.put(seat.coach + seat.seatNumber, new Topologie.TopologieSeat(seat)));
+        Optional<List<Topologie.TopologieSeat>> elegibleCoach = findEligibleCoach(request, topologie);
 
         if (!elegibleCoach.isPresent()) {
             return new ReservationResponseDto(request.trainId, new ArrayList<>(), "");
