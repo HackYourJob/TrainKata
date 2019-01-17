@@ -1,8 +1,11 @@
 import com.google.gson.Gson;
-import external.bookingReference.BookingReferenceClient;
-import external.bookingReference.Seat;
-import external.trainData.Topologie;
-import external.trainData.TrainDataClient;
+import domain.BookingReferenceClient;
+import infra.out.Seat;
+import infra.out.Topologie;
+import domain.TrainDataClient;
+import infra.in.ReservationRequestDto;
+import infra.in.ReservationResponseDto;
+
 import org.junit.*;
 
 import java.util.List;
@@ -14,7 +17,7 @@ public class TicketOfficeServiceTest {
 
     @Test
     public void Reserve_seats_when_train_is_empty()
-    { 
+    {
         int seatsRequestedCount = 3;
         TicketOfficeService service = buildTicketOfficeService(TrainTopologies.With_10_available_seats());
 

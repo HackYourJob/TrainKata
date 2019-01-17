@@ -1,3 +1,5 @@
+package infra.in;
+
 import java.util.List;
 
 public class ReservationResponseDto {

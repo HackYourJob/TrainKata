@@ -1,6 +1,8 @@
-package external.bookingReference;
+package domain;
 
 import java.util.List;
+
+import infra.out.Seat;
 
 public interface BookingReferenceClient {
     String generateBookingReference();

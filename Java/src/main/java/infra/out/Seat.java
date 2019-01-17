@@ -1,4 +1,4 @@
-package external.bookingReference;
+package infra.out;
 
 public class Seat {
     public final String coach;

@@ -1,3 +1,4 @@
+package infra.in;
 
 public class ReservationRequestDto {
 	public final String trainId;
