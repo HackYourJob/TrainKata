@@ -11,9 +11,9 @@ public class TestTest {
         TrainId trainId = new TrainId("trainId");
         ReservationId reservationId = new ReservationId("IdDeReservation1");
         Reserver reserver = new Reserver(
-                new TrainTopologyService(topologie),
-                new ReservationReferenceService(reservationId),
-                new ReservationService());
+                new TrainTopologyServiceFake(topologie),
+                new ReservationReferenceServiceFake(reservationId),
+                new ReservationServiceSpy());
 
         //When
         Reservation reservation = reserver.execute(trainId, nbPlaces);

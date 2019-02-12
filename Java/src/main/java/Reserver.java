@@ -1,9 +1,9 @@
 public class Reserver {
-    private final TrainTopologyService trainTopologyService;
-    private final ReservationReferenceService reservationReferenceService;
-    private final ReservationService reservationService;
+    private final ITrainTopologyService trainTopologyService;
+    private final IReservationReferenceService reservationReferenceService;
+    private final IReservationService reservationService;
 
-    public Reserver(TrainTopologyService trainTopologyService, ReservationReferenceService reservationReferenceService, ReservationService reservationService) {
+    public Reserver(ITrainTopologyService trainTopologyService, IReservationReferenceService reservationReferenceService, IReservationService reservationService) {
 
         this.trainTopologyService = trainTopologyService;
         this.reservationReferenceService = reservationReferenceService;

@@ -1,7 +1,7 @@
-public class TrainTopologyService {
+public class TrainTopologyServiceFake implements ITrainTopologyService {
     private TrainTopologie topologie;
 
-    public TrainTopologyService(TrainTopologie topologie) {
+    public TrainTopologyServiceFake(TrainTopologie topologie) {
         this.topologie = topologie;
     }
 
