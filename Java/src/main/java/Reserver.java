@@ -10,7 +10,10 @@ public class Reserver {
         this.reservationService = reservationService;
     }
 
-    public Reservation execute(String trainId, int nbPlaces) {
-        return null;
+    public Reservation execute(TrainId trainId, int nbPlaces) {
+        TrainTopologie trainTopologie = trainTopologyService.get(trainId);
+        PlaceId placeId = trainTopologie.getPlaces().get(0).getPlaceId();
+        ReservationId idReservation = reservationReferenceService.getNewReference();
+        return new Reservation(placeId, idReservation);
     }
 }

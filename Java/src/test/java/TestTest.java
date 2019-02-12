@@ -8,18 +8,18 @@ public class TestTest {
         //Given
         TrainTopologie topologie = trainVide();
         int nbPlaces = 1;
-        String trainId = "trainId";
-        String idDeReservation = "IdDeReservation1";
+        TrainId trainId = new TrainId("trainId");
+        ReservationId reservationId = new ReservationId("IdDeReservation1");
         Reserver reserver = new Reserver(
                 new TrainTopologyService(topologie),
-                new ReservationReferenceService(idDeReservation),
+                new ReservationReferenceService(reservationId),
                 new ReservationService());
 
         //When
         Reservation reservation = reserver.execute(trainId, nbPlaces);
 
         //Then
-        Reservation reservationAttendue = new Reservation(new PlaceId("1A"), idDeReservation);
+        Reservation reservationAttendue = new Reservation(new PlaceId("1A"), reservationId);
         assertEquals(reservation, reservationAttendue);
     }
 

@@ -6,4 +6,8 @@ public class TopologiePlace {
         this.placeId = placeId;
         this.statutPlace = statutPlace;
     }
+
+    public PlaceId getPlaceId() {
+        return placeId;
+    }
 }

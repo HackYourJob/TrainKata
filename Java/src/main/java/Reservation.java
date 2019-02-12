@@ -2,11 +2,11 @@ import java.util.Objects;
 
 public class Reservation {
     private final PlaceId placeId;
-    private final String idDeReservation;
+    private final ReservationId idDeReservation;
 
-    public Reservation(PlaceId placeId, String idDeReservation) {
+    public Reservation(PlaceId placeId, ReservationId reservationId) {
         this.placeId = placeId;
-        this.idDeReservation = idDeReservation;
+        this.idDeReservation = reservationId;
     }
 
     @Override
