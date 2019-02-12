@@ -1,5 +1,7 @@
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -22,7 +24,7 @@ public class TestTest {
         Optional<Reservation> reservation = reserver.execute(trainId, nbPlaces);
 
         //Then
-        Reservation reservationAttendue = new Reservation(new PlaceId("1A"), reservationId);
+        Reservation reservationAttendue = new Reservation(reservationId, Arrays.asList(new PlaceId("1A")));
         assertEquals(Optional.of(reservationAttendue), reservation);
         assertEquals(reservation, reservationService.getReservation());
     }
@@ -45,6 +47,27 @@ public class TestTest {
 
         //Then
         assertFalse(reservation.isPresent());
+        assertEquals(reservation, reservationService.getReservation());
+    }
+
+    @Test
+    public void quandJeReserve2PlacesJObtiens1ReservationEt2PlacesSiLesPlacesSontLibres() {
+        //Given
+        TrainTopologie topologie = trainVide();
+        int nbPlaces = 2;
+        TrainId trainId = new TrainId("trainId");
+        ReservationId reservationId = new ReservationId("IdDeReservation1");
+        ReservationServiceSpy reservationService = new ReservationServiceSpy();
+        Reserver reserver = new Reserver(
+                new TrainTopologyServiceFake(topologie),
+                new ReservationReferenceServiceFake(reservationId),
+                reservationService);
+
+        //When
+        Optional<Reservation> reservation = reserver.execute(trainId, nbPlaces);
+
+        //Then
+        assertEquals(reservation.get().getPlaces().size(), 2);
         assertEquals(reservation, reservationService.getReservation());
     }
 
