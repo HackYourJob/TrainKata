@@ -10,17 +10,19 @@ public class TestTest {
         int nbPlaces = 1;
         TrainId trainId = new TrainId("trainId");
         ReservationId reservationId = new ReservationId("IdDeReservation1");
+        ReservationServiceSpy reservationService = new ReservationServiceSpy();
         Reserver reserver = new Reserver(
                 new TrainTopologyServiceFake(topologie),
                 new ReservationReferenceServiceFake(reservationId),
-                new ReservationServiceSpy());
+                reservationService);
 
         //When
         Reservation reservation = reserver.execute(trainId, nbPlaces);
 
         //Then
         Reservation reservationAttendue = new Reservation(new PlaceId("1A"), reservationId);
-        assertEquals(reservation, reservationAttendue);
+        assertEquals(reservationAttendue, reservation);
+        assertEquals(reservation, reservationService.reservation);
     }
 
     private TrainTopologie trainVide() {

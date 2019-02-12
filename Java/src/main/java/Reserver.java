@@ -3,7 +3,9 @@ public class Reserver {
     private final IReservationReferenceService reservationReferenceService;
     private final IReservationService reservationService;
 
-    public Reserver(ITrainTopologyService trainTopologyService, IReservationReferenceService reservationReferenceService, IReservationService reservationService) {
+    public Reserver(ITrainTopologyService trainTopologyService,
+                    IReservationReferenceService reservationReferenceService,
+                    IReservationService reservationService) {
 
         this.trainTopologyService = trainTopologyService;
         this.reservationReferenceService = reservationReferenceService;
@@ -14,6 +16,8 @@ public class Reserver {
         TrainTopologie trainTopologie = trainTopologyService.get(trainId);
         PlaceId placeId = trainTopologie.getPlaces().get(0).getPlaceId();
         ReservationId idReservation = reservationReferenceService.getNewReference();
-        return new Reservation(placeId, idReservation);
+        Reservation reservation = new Reservation(placeId, idReservation);
+        reservationService.transmettre(reservation);
+        return reservation;
     }
 }
