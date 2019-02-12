@@ -1,3 +1,5 @@
+import java.util.Optional;
+
 public class Reserver {
     private final ITrainTopologyService trainTopologyService;
     private final IReservationReferenceService reservationReferenceService;
@@ -12,12 +14,23 @@ public class Reserver {
         this.reservationService = reservationService;
     }
 
-    public Reservation execute(TrainId trainId, int nbPlaces) {
+    public Optional<Reservation> execute(TrainId trainId, int nbPlaces) {
         TrainTopologie trainTopologie = trainTopologyService.get(trainId);
-        PlaceId placeId = trainTopologie.getPlaces().get(0).getPlaceId();
-        ReservationId idReservation = reservationReferenceService.getNewReference();
-        Reservation reservation = new Reservation(placeId, idReservation);
-        reservationService.transmettre(reservation);
-        return reservation;
+        Optional<PlaceId> placeId =
+                trainTopologie
+                        .getPlacesLibres()
+                        .stream()
+                        .findFirst()
+                        .map(place -> place.getPlaceId());
+
+        if(placeId.isPresent()){
+            ReservationId idReservation = reservationReferenceService.getNewReference();
+            Reservation reservation = new Reservation(placeId.get(), idReservation);
+            reservationService.transmettre(reservation);
+            return Optional.ofNullable(reservation);
+        } else {
+            return Optional.empty();
+        }
+
     }
 }

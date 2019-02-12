@@ -10,4 +10,8 @@ public class TopologiePlace {
     public PlaceId getPlaceId() {
         return placeId;
     }
+
+    public StatutPlace getStatut() {
+        return statutPlace;
+    }
 }
