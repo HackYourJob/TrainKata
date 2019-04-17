@@ -1,46 +1,25 @@
 import domain.*;
+import domain.ports.in.MakeReservation;
 import domain.ports.out.BookTrain;
 import domain.ports.out.GetTrainTopology;
-import infra.BookSncfTrain;
-import infra.BookingReferenceClient;
-import infra.GetSncfTrainTopology;
-import infra.ReservationRequestDto;
-import infra.ReservationResponseDto;
-import infra.SeatDto;
-import infra.TrainDataClient;
+import infra.*;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
-    private final GetTrainTopology getTrainTopology;
-    private final BookTrain bookTrain;
+    private final MakeReservation makeReservation;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.bookTrain = new BookSncfTrain(bookingReferenceClient);
-        this.getTrainTopology = new GetSncfTrainTopology(trainDataClient);
-    }
-
-    public Reservation makeReservation(MakeReservation makeReservation) {
-        List<Coach> coaches = getTrainTopology.getTrainTopology(makeReservation.trainId);
-
-        Coach foundCoach = tryToFindAvailableCoach(makeReservation, coaches);
-
-        List<Seat> chosenSeats = tryToChooseSeats(makeReservation, foundCoach);
-
-        if (chosenSeats.isEmpty()) {
-            // TODO: 17/04/2019 Optionnal
-            return null;
-        }
-        Reservation reservation = bookTrain.bookTrain(makeReservation.trainId, chosenSeats, foundCoach);
-        return reservation;
+        BookTrain bookTrain = new BookSncfTrain(bookingReferenceClient);
+        GetTrainTopology getTrainTopology = new GetSncfTrainTopology(trainDataClient);
+        makeReservation = new MakeReservation(getTrainTopology, bookTrain);
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        Reservation reservation = makeReservation(new MakeReservation(new TrainId(request.trainId), request.seatCount));
+        Reservation reservation = makeReservation.makeReservation(new MakeReservationCommand(new TrainId(request.trainId), request.seatCount));
 
         if (reservation == null) {
             return serializeReservation(
@@ -55,7 +34,7 @@ public class TicketOfficeService {
         if (chosenSeats.isEmpty()) {
             return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
         }
-        Reservation reservation = bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
+        Reservation reservation = makeReservation.bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
         List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(foundCoach.id, s.id)).collect(Collectors.toList());
         return new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId);
     }
@@ -70,35 +49,12 @@ public class TicketOfficeService {
 
     }
 
-    private List<Seat> tryToChooseSeats(MakeReservation command, Coach foundCoach) {
-        List<Seat> chosenSeats = new ArrayList<>();
-        if (foundCoach != null) {
-            long limit = command.nbSeats;
-            for (Seat seat : foundCoach.seats) {
-                if (seat.available) {
-                    if (limit-- == 0) break;
-                    chosenSeats.add(seat);
-                }
-            }
-        }
-        return chosenSeats;
+    private List<Seat> tryToChooseSeats(MakeReservationCommand command, Coach foundCoach) {
+        return makeReservation.tryToChooseSeats(command, foundCoach);
     }
 
-    private Coach tryToFindAvailableCoach(MakeReservation command, List<Coach> coaches) {
-        Coach foundCoach = null;
-        for (Coach coach : coaches) {
-            long nbAvailableSeats = 0L;
-            for (Seat seat : coach.seats) {
-                if (seat.available) {
-                    nbAvailableSeats++;
-                }
-            }
-            if (nbAvailableSeats >= command.nbSeats) {
-                foundCoach = coach;
-                break;
-            }
-        }
-        return foundCoach;
+    private Coach tryToFindAvailableCoach(MakeReservationCommand command, List<Coach> coaches) {
+        return makeReservation.tryToFindAvailableCoach(command, coaches);
     }
 
 }
