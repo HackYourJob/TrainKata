@@ -1,3 +1,7 @@
+import infra.BookingReferenceClient;
+import infra.ReservationRequestDto;
+import infra.SeatDto;
+import infra.TrainDataClient;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

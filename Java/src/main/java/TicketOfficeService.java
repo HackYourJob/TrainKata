@@ -1,20 +1,24 @@
 import com.google.gson.Gson;
+import domain.Coach;
+import domain.Seat;
+import domain.TrainId;
+import infra.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
-    private TrainDataClient trainDataClient;
+    private final GetSncfTrainTopology getSncfTrainTopology;
     private BookingReferenceClient bookingReferenceClient;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.trainDataClient = trainDataClient;
         this.bookingReferenceClient = bookingReferenceClient;
+        this.getSncfTrainTopology =new GetSncfTrainTopology(trainDataClient);
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        List<Coach> coaches = getTrainTopology(request);
+        List<Coach> coaches = getSncfTrainTopology.getTrainTopology(new TrainId(request.trainId));
 
         Coach foundCoach = tryToFindAvailableCoach(request, coaches);
 
@@ -23,16 +27,6 @@ public class TicketOfficeService {
 
         ReservationResponseDto reservationResponseDto = tryToBookTrain(request, chosenSeats, foundCoach);
         return serializeReservation(reservationResponseDto);
-    }
-
-    class Coach {
-        private final String id;
-        private final List<Seat> seats;
-
-        public Coach(String id, List<Seat> seats) {
-            this.id = id;
-            this.seats = seats;
-        }
     }
 
     private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, List<Seat> chosenSeats, Coach coach) {
@@ -87,26 +81,6 @@ public class TicketOfficeService {
             }
         }
         return foundCoach;
-    }
-
-    private List<Coach> getTrainTopology(ReservationRequestDto request) {
-        String trainTopology = callSncfToGetTopology(request);
-
-        return deserializeTopology(trainTopology).entrySet().stream()
-                .map(entry -> new Coach(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-    }
-
-    private Map<String, List<Seat>> deserializeTopology(String trainTopology) {
-        Map<String, List<Seat>> coaches = new HashMap<>();
-        for (Topologie.TopologieSeat seat : new Gson().fromJson(trainTopology, Topologie.class).seats.values()) {
-            coaches.computeIfAbsent(seat.coach, _k -> new ArrayList<>()).add(new Seat(seat.seat_number, seat.booking_reference.isEmpty()));
-        }
-        return coaches;
-    }
-
-    private String callSncfToGetTopology(ReservationRequestDto request) {
-        return trainDataClient.getTopology(request.trainId);
     }
 
 }

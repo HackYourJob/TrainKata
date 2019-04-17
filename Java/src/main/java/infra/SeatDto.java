@@ -1,3 +1,4 @@
+package infra;
 
 public class SeatDto {
     public final String coach;

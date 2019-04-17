@@ -1,3 +1,7 @@
+package infra;
+
+import infra.SeatDto;
+
 import java.util.List;
 
 public class ReservationResponseDto {
@@ -13,7 +17,7 @@ public class ReservationResponseDto {
 
     @Override
     public String toString() {
-        return "ReservationResponseDto{" +
+        return "infra.ReservationResponseDto{" +
                 "trainId='" + trainId + '\'' +
                 ", bookingId='" + bookingId + '\'' +
                 ", seats=" + seats +
