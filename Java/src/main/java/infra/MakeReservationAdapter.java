@@ -38,7 +38,7 @@ public class MakeReservationAdapter {
             return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
         }
         ReservationSucceed reservation = makeReservation.bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
-        List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(foundCoach.id, s.id)).collect(Collectors.toList());
+        List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(foundCoach.id.id, s.id)).collect(Collectors.toList());
         return new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId);
     }
 

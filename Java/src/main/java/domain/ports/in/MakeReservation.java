@@ -24,7 +24,6 @@ public class MakeReservation {
         List<Seat> chosenSeats = tryToChooseSeats(makeReservation, foundCoach);
 
         if (chosenSeats.isEmpty()) {
-            // TODO: 17/04/2019 Optionnal
             return new ReservationFailed(makeReservation.trainId);
         }
         ReservationSucceed reservation = bookTrain.bookTrain(makeReservation.trainId, chosenSeats, foundCoach);
@@ -47,14 +46,10 @@ public class MakeReservation {
 
     public Coach tryToFindAvailableCoach(MakeReservationCommand command, List<Coach> coaches) {
         Coach foundCoach = null;
+
+
         for (Coach coach : coaches) {
-            long nbAvailableSeats = 0L;
-            for (Seat seat : coach.seats) {
-                if (seat.available) {
-                    nbAvailableSeats++;
-                }
-            }
-            if (nbAvailableSeats >= command.nbSeats) {
+            if (coach.canAcceptMorePeople(command.nbSeats)) {
                 foundCoach = coach;
                 break;
             }

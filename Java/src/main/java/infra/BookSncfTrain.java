@@ -20,13 +20,13 @@ public class BookSncfTrain implements BookTrain {
         ReservationSucceed reservation = new ReservationSucceed(
                 trainId,
                 bookingReferenceClient.generateBookingReference(),
-                coach.id,
+                coach.id.id,
                 chosenSeats
         );
         bookingReferenceClient.bookTrain(
                 reservation.trainId.id,
                 reservation.bookingId,
-                reservation.seats.stream().map(s -> new SeatDto(coach.id, s.id)).collect(Collectors.toList())
+                reservation.seats.stream().map(s -> new SeatDto(coach.id.id, s.id)).collect(Collectors.toList())
         );
         return reservation;
     }

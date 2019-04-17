@@ -2,6 +2,7 @@ package infra;
 
 import com.google.gson.Gson;
 import domain.Coach;
+import domain.CoachId;
 import domain.ports.out.GetTrainTopology;
 import domain.Seat;
 import domain.TrainId;
@@ -25,7 +26,7 @@ public class GetSncfTrainTopology implements GetTrainTopology {
         String trainTopology = callSncfToGetTopology(trainId);
 
         return deserializeTopology(trainTopology).entrySet().stream()
-                .map(entry -> new Coach(entry.getKey(), entry.getValue()))
+                .map(entry -> new Coach(new CoachId(entry.getKey()), entry.getValue()))
                 .collect(Collectors.toList());
     }
 

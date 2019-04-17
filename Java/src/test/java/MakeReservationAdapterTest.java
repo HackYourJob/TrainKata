@@ -80,7 +80,6 @@ public class MakeReservationAdapterTest {
     }
 
     @Test
-    @Ignore
     public void Not_reserve_seats_when_it_exceed_max_capacity_threshold()
     {
         int seatsRequestedCount = 3;
