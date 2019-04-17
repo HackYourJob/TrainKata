@@ -14,30 +14,30 @@ public class TicketOfficeService {
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        //Récupérer les données
-        String trainTopology = trainDataClient.getTopology(request.trainId);
+        Map<String, List<Topologie.TopologieSeat>> coaches = getTrainTopology(request);
 
-        //Transformation de structure
-        Map<String, List<Topologie.TopologieSeat>> coaches = new HashMap<>();
-        for (Topologie.TopologieSeat seat : new Gson().fromJson(trainTopology, Topologie.class).seats.values()) {
-            coaches.computeIfAbsent(seat.coach, _k -> new ArrayList<>()).add(seat);
+        Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach = tryToFindAvailableCoach(request, coaches);
+
+        List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
+
+        return serializeReservation(request, chosenSeats);
+    }
+
+    private String serializeReservation(ReservationRequestDto request, List<Seat> chosenSeats) {
+        //Création de la réponse
+        if (!chosenSeats.isEmpty()) {
+            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, chosenSeats, bookingReferenceClient.generateBookingReference());
+            return "{" +
+                    "\"train_id\": \"" + reservation.trainId + "\", " +
+                    "\"booking_reference\": \"" + reservation.bookingId + "\", " +
+                    "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
+                    "}";
+        } else {
+            return "{\"train_id\": \"" + request.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
         }
+    }
 
-        //Recherche du wagon ayant des places disponibles
-        Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach = null;
-        for (Map.Entry<String, List<Topologie.TopologieSeat>> coach : coaches.entrySet()) {
-            long nbAvailableSeats = 0L;
-            for (Topologie.TopologieSeat seat : coach.getValue()) {
-                if ("".equals(seat.booking_reference)) {
-                    nbAvailableSeats++;
-                }
-            }
-            if (nbAvailableSeats >= request.seatCount) {
-                foundCoach = coach;
-                break;
-            }
-        }
-
+    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach) {
         //Recherche des sièges dans le wagon identifié
         List<Seat> chosenSeats = new ArrayList<>();
         if (foundCoach != null) {
@@ -52,17 +52,42 @@ public class TicketOfficeService {
             }
             chosenSeats = seats;
         }
-
-        //Création de la réponse
-        if (!chosenSeats.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, chosenSeats, bookingReferenceClient.generateBookingReference());
-            return "{" +
-                    "\"train_id\": \"" + reservation.trainId + "\", " +
-                    "\"booking_reference\": \"" + reservation.bookingId + "\", " +
-                    "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
-                    "}";
-        } else {
-            return "{\"train_id\": \"" + request.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
-        }
+        return chosenSeats;
     }
+
+    private Map.Entry<String, List<Topologie.TopologieSeat>> tryToFindAvailableCoach(ReservationRequestDto request, Map<String, List<Topologie.TopologieSeat>> coaches) {
+        Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach = null;
+        for (Map.Entry<String, List<Topologie.TopologieSeat>> coach : coaches.entrySet()) {
+            long nbAvailableSeats = 0L;
+            for (Topologie.TopologieSeat seat : coach.getValue()) {
+                if ("".equals(seat.booking_reference)) {
+                    nbAvailableSeats++;
+                }
+            }
+            if (nbAvailableSeats >= request.seatCount) {
+                foundCoach = coach;
+                break;
+            }
+        }
+        return foundCoach;
+    }
+
+    private Map<String, List<Topologie.TopologieSeat>> getTrainTopology(ReservationRequestDto request) {
+        String trainTopology = callSncfToGetTopology(request);
+
+        return deserializeTopology(trainTopology);
+    }
+
+    private Map<String, List<Topologie.TopologieSeat>> deserializeTopology(String trainTopology) {
+        Map<String, List<Topologie.TopologieSeat>> coaches = new HashMap<>();
+        for (Topologie.TopologieSeat seat : new Gson().fromJson(trainTopology, Topologie.class).seats.values()) {
+            coaches.computeIfAbsent(seat.coach, _k -> new ArrayList<>()).add(seat);
+        }
+        return coaches;
+    }
+
+    private String callSncfToGetTopology(ReservationRequestDto request) {
+        return trainDataClient.getTopology(request.trainId);
+    }
+
 }
