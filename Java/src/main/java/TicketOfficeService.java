@@ -1,5 +1,6 @@
 import com.google.gson.Gson;
 import domain.Coach;
+import domain.Reservation;
 import domain.Seat;
 import domain.TrainId;
 import infra.*;
@@ -10,10 +11,10 @@ import java.util.stream.Collectors;
 public class TicketOfficeService {
 
     private final GetSncfTrainTopology getSncfTrainTopology;
-    private BookingReferenceClient bookingReferenceClient;
+    private final BookSncfTrain bookSncfTrain;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.bookingReferenceClient = bookingReferenceClient;
+        bookSncfTrain = new BookSncfTrain(bookingReferenceClient);
         this.getSncfTrainTopology =new GetSncfTrainTopology(trainDataClient);
     }
 
@@ -24,22 +25,17 @@ public class TicketOfficeService {
 
         List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
 
+        ReservationResponseDto reservationResponseDto = tryToBookTrain(request, foundCoach, chosenSeats);
 
-        ReservationResponseDto reservationResponseDto = tryToBookTrain(request, chosenSeats, foundCoach);
         return serializeReservation(reservationResponseDto);
     }
 
-    private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, List<Seat> chosenSeats, Coach coach) {
-        if (!chosenSeats.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(
-                    request.trainId,
-                    chosenSeats.stream().map(s -> new SeatDto(coach.id, s.id)).collect(Collectors.toList()),
-                    bookingReferenceClient.generateBookingReference());
-            bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
-            return reservation;
+    private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, Coach foundCoach, List<Seat> chosenSeats) {
+        if (chosenSeats.isEmpty()) {
+            return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
         }
-
-        return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
+        Reservation reservation = bookSncfTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
+        return new ReservationResponseDto(reservation.trainId.id, reservation.seats.stream().map(s -> new SeatDto(foundCoach.id,s.id)).collect(Collectors.toList()), reservation.bookingId);
     }
 
     private String serializeReservation(ReservationResponseDto response) {
