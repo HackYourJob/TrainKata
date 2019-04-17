@@ -20,7 +20,9 @@ public class TicketOfficeService {
 
         List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
 
-        return serializeReservation(request, chosenSeats, foundCoach);
+
+        ReservationResponseDto reservationResponseDto = tryToBookTrain(request, chosenSeats, foundCoach);
+        return serializeReservation(reservationResponseDto);
     }
 
     class Coach {
@@ -33,21 +35,27 @@ public class TicketOfficeService {
         }
     }
 
-    private String serializeReservation(ReservationRequestDto request, List<Seat> chosenSeats, Coach coach) {
+    private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, List<Seat> chosenSeats, Coach coach) {
         if (!chosenSeats.isEmpty()) {
             ReservationResponseDto reservation = new ReservationResponseDto(
                     request.trainId,
                     chosenSeats.stream().map(s -> new SeatDto(coach.id, s.id)).collect(Collectors.toList()),
                     bookingReferenceClient.generateBookingReference());
             bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
-            return "{" +
-                    "\"train_id\": \"" + reservation.trainId + "\", " +
-                    "\"booking_reference\": \"" + reservation.bookingId + "\", " +
-                    "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
-                    "}";
-        } else {
-            return "{\"train_id\": \"" + request.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
+            return reservation;
         }
+
+        return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
+    }
+
+    private String serializeReservation(ReservationResponseDto response) {
+
+        return "{" +
+                "\"train_id\": \"" + response.trainId + "\", " +
+                "\"booking_reference\": \"" + response.bookingId + "\", " +
+                "\"seats\": [" + response.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
+                "}";
+
     }
 
     private List<Seat> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
