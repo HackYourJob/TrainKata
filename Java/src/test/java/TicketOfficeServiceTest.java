@@ -7,6 +7,8 @@ import java.util.List;
 public class TicketOfficeServiceTest {
     private static final String TrainId = "9043-2018-05-24";
     private static final String BookingReference = "75bcd15";
+    private static BookingReferenceClientStub bookingReferenceClient;
+    private static TrainDataClientStub trainDataClient;
 
     @Test
     public void Reserve_seats_when_train_is_empty()
@@ -17,6 +19,19 @@ public class TicketOfficeServiceTest {
         String reservation = service.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
 
         Assert.assertEquals("{\"train_id\": \"" + TrainId + "\", \"booking_reference\": \""+ BookingReference +"\", \"seats\": [\"1A\", \"2A\", \"3A\"]}", reservation);
+    }
+
+    @Test
+    public void Call_service_when_seats_are_available()
+    {
+        int seatsRequestedCount = 3;
+        TicketOfficeService service = buildTicketOfficeService(TrainTopologies.With_10_available_seats());
+
+        String reservation = service.makeReservation(new ReservationRequestDto(TrainId, seatsRequestedCount));
+
+        Assert.assertEquals(TrainId, bookingReferenceClient.trainIdSubmitted);
+        Assert.assertEquals(BookingReference, bookingReferenceClient.bookingReferenceSubmitted);
+        Assert.assertArrayEquals(new String[] { "1A", "2A", "3A" }, bookingReferenceClient.seatsSubmitted.stream().map(seat -> seat.seatNumber + seat.coach).toArray());
     }
 
     @Test
@@ -77,11 +92,16 @@ public class TicketOfficeServiceTest {
 
     private static TicketOfficeService buildTicketOfficeService(String topologies)
     {
-        return new TicketOfficeService(new TrainDataClientStub(topologies), new BookingReferenceClientStub(BookingReference));
+        bookingReferenceClient = new BookingReferenceClientStub(BookingReference);
+        trainDataClient = new TrainDataClientStub(topologies);
+        return new TicketOfficeService(trainDataClient, bookingReferenceClient);
     }
 
     private static class BookingReferenceClientStub implements BookingReferenceClient {
         private String bookingReference;
+        public String trainIdSubmitted;
+        public String bookingReferenceSubmitted;
+        public List<SeatDto> seatsSubmitted;
 
         public BookingReferenceClientStub(String bookingReference) {
             this.bookingReference = bookingReference;
@@ -94,6 +114,9 @@ public class TicketOfficeServiceTest {
 
         @Override
         public void bookTrain(String trainId, String bookingReference, List<SeatDto> seats){
+            trainIdSubmitted = trainId;
+            bookingReferenceSubmitted = bookingReference;
+            seatsSubmitted = seats;
         }
     }
 

@@ -39,6 +39,7 @@ public class TicketOfficeService {
                     request.trainId,
                     chosenSeats.stream().map(s -> new SeatDto(coach.id, s.id)).collect(Collectors.toList()),
                     bookingReferenceClient.generateBookingReference());
+            bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
             return "{" +
                     "\"train_id\": \"" + reservation.trainId + "\", " +
                     "\"booking_reference\": \"" + reservation.bookingId + "\", " +
