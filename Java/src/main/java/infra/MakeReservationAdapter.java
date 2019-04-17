@@ -1,3 +1,5 @@
+package infra;
+
 import domain.*;
 import domain.ports.in.MakeReservation;
 import domain.ports.out.BookTrain;
@@ -8,11 +10,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TicketOfficeService {
+public class MakeReservationAdapter {
 
     private final MakeReservation makeReservation;
 
-    public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
+    public MakeReservationAdapter(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
         BookTrain bookTrain = new BookSncfTrain(bookingReferenceClient);
         GetTrainTopology getTrainTopology = new GetSncfTrainTopology(trainDataClient);
         makeReservation = new MakeReservation(getTrainTopology, bookTrain);
