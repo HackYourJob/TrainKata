@@ -14,17 +14,26 @@ public class TicketOfficeService {
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        Map<String, List<Topologie.TopologieSeat>> coaches = getTrainTopology(request);
+        List<Coach> coaches = getTrainTopology(request);
 
-        Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach = tryToFindAvailableCoach(request, coaches);
+        Coach foundCoach = tryToFindAvailableCoach(request, coaches);
 
         List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
 
         return serializeReservation(request, chosenSeats);
     }
 
+    class Coach{
+        private final String id;
+        private final List<Topologie.TopologieSeat> seats;
+
+        public Coach(String id, List<Topologie.TopologieSeat> seats) {
+            this.id = id;
+            this.seats = seats;
+        }
+    }
+
     private String serializeReservation(ReservationRequestDto request, List<Seat> chosenSeats) {
-        //Création de la réponse
         if (!chosenSeats.isEmpty()) {
             ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, chosenSeats, bookingReferenceClient.generateBookingReference());
             return "{" +
@@ -37,13 +46,13 @@ public class TicketOfficeService {
         }
     }
 
-    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach) {
+    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
         //Recherche des sièges dans le wagon identifié
         List<Seat> chosenSeats = new ArrayList<>();
         if (foundCoach != null) {
             List<Seat> seats = new ArrayList<>();
             long limit = request.seatCount;
-            for (Topologie.TopologieSeat seatTopology : foundCoach.getValue()) {
+            for (Topologie.TopologieSeat seatTopology : foundCoach.seats) {
                 if ("".equals(seatTopology.booking_reference)) {
                     if (limit-- == 0) break;
                     Seat seat = new Seat(seatTopology.coach, seatTopology.seat_number);
@@ -55,11 +64,11 @@ public class TicketOfficeService {
         return chosenSeats;
     }
 
-    private Map.Entry<String, List<Topologie.TopologieSeat>> tryToFindAvailableCoach(ReservationRequestDto request, Map<String, List<Topologie.TopologieSeat>> coaches) {
-        Map.Entry<String, List<Topologie.TopologieSeat>> foundCoach = null;
-        for (Map.Entry<String, List<Topologie.TopologieSeat>> coach : coaches.entrySet()) {
+    private Coach tryToFindAvailableCoach(ReservationRequestDto request, List<Coach> coaches) {
+        Coach foundCoach = null;
+        for (Coach coach : coaches) {
             long nbAvailableSeats = 0L;
-            for (Topologie.TopologieSeat seat : coach.getValue()) {
+            for (Topologie.TopologieSeat seat : coach.seats) {
                 if ("".equals(seat.booking_reference)) {
                     nbAvailableSeats++;
                 }
@@ -72,10 +81,12 @@ public class TicketOfficeService {
         return foundCoach;
     }
 
-    private Map<String, List<Topologie.TopologieSeat>> getTrainTopology(ReservationRequestDto request) {
+    private List<Coach> getTrainTopology(ReservationRequestDto request) {
         String trainTopology = callSncfToGetTopology(request);
 
-        return deserializeTopology(trainTopology);
+        return deserializeTopology(trainTopology).entrySet().stream()
+                .map(entry -> new Coach(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     private Map<String, List<Topologie.TopologieSeat>> deserializeTopology(String trainTopology) {
