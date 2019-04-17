@@ -1,15 +1,9 @@
-
 public class Seat {
-    public final String coach;
-    public final int seatNumber;
+    private final String id;
+    private final boolean available;
 
-    public Seat(String coach, int seatNumber) {
-        this.coach = coach;
-        this.seatNumber = seatNumber;
-    }
-
-    public boolean equals(Object o) {
-        Seat other = (Seat)o;
-        return coach==other.coach && seatNumber==other.seatNumber;
+    public Seat(String id, boolean available) {
+        this.id = id;
+        this.available = available;
     }
 }

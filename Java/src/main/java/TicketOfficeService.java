@@ -18,7 +18,7 @@ public class TicketOfficeService {
 
         Coach foundCoach = tryToFindAvailableCoach(request, coaches);
 
-        List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
+        List<SeatDto> chosenSeats = tryToChooseSeats(request, foundCoach);
 
         return serializeReservation(request, chosenSeats);
     }
@@ -33,7 +33,7 @@ public class TicketOfficeService {
         }
     }
 
-    private String serializeReservation(ReservationRequestDto request, List<Seat> chosenSeats) {
+    private String serializeReservation(ReservationRequestDto request, List<SeatDto> chosenSeats) {
         if (!chosenSeats.isEmpty()) {
             ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, chosenSeats, bookingReferenceClient.generateBookingReference());
             return "{" +
@@ -46,16 +46,15 @@ public class TicketOfficeService {
         }
     }
 
-    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
-        //Recherche des sièges dans le wagon identifié
-        List<Seat> chosenSeats = new ArrayList<>();
+    private List<SeatDto> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
+        List<SeatDto> chosenSeats = new ArrayList<>();
         if (foundCoach != null) {
-            List<Seat> seats = new ArrayList<>();
+            List<SeatDto> seats = new ArrayList<>();
             long limit = request.seatCount;
             for (Topologie.TopologieSeat seatTopology : foundCoach.seats) {
                 if ("".equals(seatTopology.booking_reference)) {
                     if (limit-- == 0) break;
-                    Seat seat = new Seat(seatTopology.coach, seatTopology.seat_number);
+                    SeatDto seat = new SeatDto(seatTopology.coach, seatTopology.seat_number);
                     seats.add(seat);
                 }
             }

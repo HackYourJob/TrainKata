@@ -93,7 +93,7 @@ public class TicketOfficeServiceTest {
         }
 
         @Override
-        public void bookTrain(String trainId, String bookingReference, List<Seat> seats){
+        public void bookTrain(String trainId, String bookingReference, List<SeatDto> seats){
         }
     }
 
