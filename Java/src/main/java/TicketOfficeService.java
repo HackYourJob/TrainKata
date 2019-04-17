@@ -18,24 +18,27 @@ public class TicketOfficeService {
 
         Coach foundCoach = tryToFindAvailableCoach(request, coaches);
 
-        List<SeatDto> chosenSeats = tryToChooseSeats(request, foundCoach);
+        List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
 
-        return serializeReservation(request, chosenSeats);
+        return serializeReservation(request, chosenSeats, foundCoach);
     }
 
-    class Coach{
+    class Coach {
         private final String id;
-        private final List<Topologie.TopologieSeat> seats;
+        private final List<Seat> seats;
 
-        public Coach(String id, List<Topologie.TopologieSeat> seats) {
+        public Coach(String id, List<Seat> seats) {
             this.id = id;
             this.seats = seats;
         }
     }
 
-    private String serializeReservation(ReservationRequestDto request, List<SeatDto> chosenSeats) {
+    private String serializeReservation(ReservationRequestDto request, List<Seat> chosenSeats, Coach coach) {
         if (!chosenSeats.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, chosenSeats, bookingReferenceClient.generateBookingReference());
+            ReservationResponseDto reservation = new ReservationResponseDto(
+                    request.trainId,
+                    chosenSeats.stream().map(s -> new SeatDto(coach.id, s.id)).collect(Collectors.toList()),
+                    bookingReferenceClient.generateBookingReference());
             return "{" +
                     "\"train_id\": \"" + reservation.trainId + "\", " +
                     "\"booking_reference\": \"" + reservation.bookingId + "\", " +
@@ -46,19 +49,16 @@ public class TicketOfficeService {
         }
     }
 
-    private List<SeatDto> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
-        List<SeatDto> chosenSeats = new ArrayList<>();
+    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
+        List<Seat> chosenSeats = new ArrayList<>();
         if (foundCoach != null) {
-            List<SeatDto> seats = new ArrayList<>();
             long limit = request.seatCount;
-            for (Topologie.TopologieSeat seatTopology : foundCoach.seats) {
-                if ("".equals(seatTopology.booking_reference)) {
+            for (Seat seat : foundCoach.seats) {
+                if (seat.available) {
                     if (limit-- == 0) break;
-                    SeatDto seat = new SeatDto(seatTopology.coach, seatTopology.seat_number);
-                    seats.add(seat);
+                    chosenSeats.add(seat);
                 }
             }
-            chosenSeats = seats;
         }
         return chosenSeats;
     }
@@ -67,8 +67,8 @@ public class TicketOfficeService {
         Coach foundCoach = null;
         for (Coach coach : coaches) {
             long nbAvailableSeats = 0L;
-            for (Topologie.TopologieSeat seat : coach.seats) {
-                if ("".equals(seat.booking_reference)) {
+            for (Seat seat : coach.seats) {
+                if (seat.available) {
                     nbAvailableSeats++;
                 }
             }
@@ -88,10 +88,10 @@ public class TicketOfficeService {
                 .collect(Collectors.toList());
     }
 
-    private Map<String, List<Topologie.TopologieSeat>> deserializeTopology(String trainTopology) {
-        Map<String, List<Topologie.TopologieSeat>> coaches = new HashMap<>();
+    private Map<String, List<Seat>> deserializeTopology(String trainTopology) {
+        Map<String, List<Seat>> coaches = new HashMap<>();
         for (Topologie.TopologieSeat seat : new Gson().fromJson(trainTopology, Topologie.class).seats.values()) {
-            coaches.computeIfAbsent(seat.coach, _k -> new ArrayList<>()).add(seat);
+            coaches.computeIfAbsent(seat.coach, _k -> new ArrayList<>()).add(new Seat(seat.seat_number, seat.booking_reference.isEmpty()));
         }
         return coaches;
     }

@@ -1,8 +1,8 @@
 public class Seat {
-    private final String id;
-    private final boolean available;
+    public final int id;
+    public final boolean available;
 
-    public Seat(String id, boolean available) {
+    public Seat(int id, boolean available) {
         this.id = id;
         this.available = available;
     }
