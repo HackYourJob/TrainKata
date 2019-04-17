@@ -4,7 +4,6 @@ import domain.*;
 import domain.ports.in.MakeReservation;
 import domain.ports.out.BookTrain;
 import domain.ports.out.GetTrainTopology;
-import infra.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,22 +20,24 @@ public class MakeReservationAdapter {
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        Reservation reservation = makeReservation.makeReservation(new MakeReservationCommand(new TrainId(request.trainId), request.seatCount));
+        ReservationDomainEvent reservationDomainEvent = makeReservation.makeReservation(new MakeReservationCommand(new TrainId(request.trainId), request.seatCount));
 
-        if (reservation == null) {
+        if (reservationDomainEvent instanceof ReservationFailed) {
             return serializeReservation(
                     new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "")
             );
         }
-        List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(reservation.coachId, s.id)).collect(Collectors.toList());
-        return serializeReservation(new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId));
+
+        ReservationSucceed reservationSucceed = (ReservationSucceed) reservationDomainEvent;
+        List<SeatDto> seatDtos = reservationSucceed.seats.stream().map(s -> new SeatDto(reservationSucceed.coachId, s.id)).collect(Collectors.toList());
+        return serializeReservation(new ReservationResponseDto(reservationSucceed.trainId.id, seatDtos, reservationSucceed.bookingId));
     }
 
     private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, Coach foundCoach, List<Seat> chosenSeats) {
         if (chosenSeats.isEmpty()) {
             return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
         }
-        Reservation reservation = makeReservation.bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
+        ReservationSucceed reservation = makeReservation.bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
         List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(foundCoach.id, s.id)).collect(Collectors.toList());
         return new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId);
     }

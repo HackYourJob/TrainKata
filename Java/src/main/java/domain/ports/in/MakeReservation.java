@@ -1,9 +1,6 @@
 package domain.ports.in;
 
-import domain.Coach;
-import domain.MakeReservationCommand;
-import domain.Reservation;
-import domain.Seat;
+import domain.*;
 import domain.ports.out.BookTrain;
 import domain.ports.out.GetTrainTopology;
 
@@ -19,7 +16,7 @@ public class MakeReservation {
         this.bookTrain = bookTrain;
     }
 
-    public Reservation makeReservation(MakeReservationCommand makeReservation) {
+    public ReservationDomainEvent makeReservation(MakeReservationCommand makeReservation) {
         List<Coach> coaches = getTrainTopology.getTrainTopology(makeReservation.trainId);
 
         Coach foundCoach = tryToFindAvailableCoach(makeReservation, coaches);
@@ -28,9 +25,9 @@ public class MakeReservation {
 
         if (chosenSeats.isEmpty()) {
             // TODO: 17/04/2019 Optionnal
-            return null;
+            return new ReservationFailed(makeReservation.trainId);
         }
-        Reservation reservation = bookTrain.bookTrain(makeReservation.trainId, chosenSeats, foundCoach);
+        ReservationSucceed reservation = bookTrain.bookTrain(makeReservation.trainId, chosenSeats, foundCoach);
         return reservation;
     }
 

@@ -16,8 +16,8 @@ public class BookSncfTrain implements BookTrain {
 
 
     @Override
-    public Reservation bookTrain(TrainId trainId, List<Seat> chosenSeats, Coach coach) {
-        Reservation reservation = new Reservation(
+    public ReservationSucceed bookTrain(TrainId trainId, List<Seat> chosenSeats, Coach coach) {
+        ReservationSucceed reservation = new ReservationSucceed(
                 trainId,
                 bookingReferenceClient.generateBookingReference(),
                 coach.id,
