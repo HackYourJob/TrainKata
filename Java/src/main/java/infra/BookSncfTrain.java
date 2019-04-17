@@ -1,6 +1,7 @@
 package infra;
 
 import domain.*;
+import domain.ports.out.BookTrain;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ public class BookSncfTrain implements BookTrain {
         Reservation reservation = new Reservation(
                 trainId,
                 bookingReferenceClient.generateBookingReference(),
+                coach.id,
                 chosenSeats
         );
         bookingReferenceClient.bookTrain(

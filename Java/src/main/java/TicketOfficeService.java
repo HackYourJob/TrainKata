@@ -1,41 +1,63 @@
-import com.google.gson.Gson;
-import domain.Coach;
-import domain.Reservation;
-import domain.Seat;
-import domain.TrainId;
-import infra.*;
+import domain.*;
+import domain.ports.out.BookTrain;
+import domain.ports.out.GetTrainTopology;
+import infra.BookSncfTrain;
+import infra.BookingReferenceClient;
+import infra.GetSncfTrainTopology;
+import infra.ReservationRequestDto;
+import infra.ReservationResponseDto;
+import infra.SeatDto;
+import infra.TrainDataClient;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
-    private final GetSncfTrainTopology getSncfTrainTopology;
-    private final BookSncfTrain bookSncfTrain;
+    private final GetTrainTopology getTrainTopology;
+    private final BookTrain bookTrain;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        bookSncfTrain = new BookSncfTrain(bookingReferenceClient);
-        this.getSncfTrainTopology =new GetSncfTrainTopology(trainDataClient);
+        this.bookTrain = new BookSncfTrain(bookingReferenceClient);
+        this.getTrainTopology = new GetSncfTrainTopology(trainDataClient);
+    }
+
+    public Reservation makeReservation(MakeReservation makeReservation) {
+        List<Coach> coaches = getTrainTopology.getTrainTopology(makeReservation.trainId);
+
+        Coach foundCoach = tryToFindAvailableCoach(makeReservation, coaches);
+
+        List<Seat> chosenSeats = tryToChooseSeats(makeReservation, foundCoach);
+
+        if (chosenSeats.isEmpty()) {
+            // TODO: 17/04/2019 Optionnal
+            return null;
+        }
+        Reservation reservation = bookTrain.bookTrain(makeReservation.trainId, chosenSeats, foundCoach);
+        return reservation;
     }
 
     public String makeReservation(ReservationRequestDto request) {
-        List<Coach> coaches = getSncfTrainTopology.getTrainTopology(new TrainId(request.trainId));
+        Reservation reservation = makeReservation(new MakeReservation(new TrainId(request.trainId), request.seatCount));
 
-        Coach foundCoach = tryToFindAvailableCoach(request, coaches);
-
-        List<Seat> chosenSeats = tryToChooseSeats(request, foundCoach);
-
-        ReservationResponseDto reservationResponseDto = tryToBookTrain(request, foundCoach, chosenSeats);
-
-        return serializeReservation(reservationResponseDto);
+        if (reservation == null) {
+            return serializeReservation(
+                    new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "")
+            );
+        }
+        List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(reservation.coachId, s.id)).collect(Collectors.toList());
+        return serializeReservation(new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId));
     }
 
     private ReservationResponseDto tryToBookTrain(ReservationRequestDto request, Coach foundCoach, List<Seat> chosenSeats) {
         if (chosenSeats.isEmpty()) {
             return new ReservationResponseDto(request.trainId, Collections.EMPTY_LIST, "");
         }
-        Reservation reservation = bookSncfTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
-        return new ReservationResponseDto(reservation.trainId.id, reservation.seats.stream().map(s -> new SeatDto(foundCoach.id,s.id)).collect(Collectors.toList()), reservation.bookingId);
+        Reservation reservation = bookTrain.bookTrain(new TrainId(request.trainId), chosenSeats, foundCoach);
+        List<SeatDto> seatDtos = reservation.seats.stream().map(s -> new SeatDto(foundCoach.id, s.id)).collect(Collectors.toList());
+        return new ReservationResponseDto(reservation.trainId.id, seatDtos, reservation.bookingId);
     }
 
     private String serializeReservation(ReservationResponseDto response) {
@@ -48,10 +70,10 @@ public class TicketOfficeService {
 
     }
 
-    private List<Seat> tryToChooseSeats(ReservationRequestDto request, Coach foundCoach) {
+    private List<Seat> tryToChooseSeats(MakeReservation command, Coach foundCoach) {
         List<Seat> chosenSeats = new ArrayList<>();
         if (foundCoach != null) {
-            long limit = request.seatCount;
+            long limit = command.nbSeats;
             for (Seat seat : foundCoach.seats) {
                 if (seat.available) {
                     if (limit-- == 0) break;
@@ -62,7 +84,7 @@ public class TicketOfficeService {
         return chosenSeats;
     }
 
-    private Coach tryToFindAvailableCoach(ReservationRequestDto request, List<Coach> coaches) {
+    private Coach tryToFindAvailableCoach(MakeReservation command, List<Coach> coaches) {
         Coach foundCoach = null;
         for (Coach coach : coaches) {
             long nbAvailableSeats = 0L;
@@ -71,7 +93,7 @@ public class TicketOfficeService {
                     nbAvailableSeats++;
                 }
             }
-            if (nbAvailableSeats >= request.seatCount) {
+            if (nbAvailableSeats >= command.nbSeats) {
                 foundCoach = coach;
                 break;
             }

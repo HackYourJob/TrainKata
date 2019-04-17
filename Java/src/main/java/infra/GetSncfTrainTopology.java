@@ -2,7 +2,7 @@ package infra;
 
 import com.google.gson.Gson;
 import domain.Coach;
-import domain.GetTrainTopology;
+import domain.ports.out.GetTrainTopology;
 import domain.Seat;
 import domain.TrainId;
 

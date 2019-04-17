@@ -1,4 +1,9 @@
-package domain;
+package domain.ports.out;
+
+import domain.Coach;
+import domain.Reservation;
+import domain.Seat;
+import domain.TrainId;
 
 import java.util.List;
 
