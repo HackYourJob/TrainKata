@@ -12,4 +12,9 @@ public class Seat {
         Seat other = (Seat)o;
         return coach==other.coach && seatNumber==other.seatNumber;
     }
+
+    @Override
+    public String toString() {
+        return this.coach + this.seatNumber;
+    }
 }
