@@ -49,6 +49,7 @@ public class TicketOfficeService {
 
         if (!seats.isEmpty()) {
             ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, seats, bookingReferenceClient.generateBookingReference());
+            this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
             return "{" +
                     "\"train_id\": \"" + reservation.trainId + "\", " +
                     "\"booking_reference\": \"" + reservation.bookingId + "\", " +
