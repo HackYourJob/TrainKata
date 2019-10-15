@@ -13,42 +13,44 @@ public class TicketOfficeService {
         this.bookingReferenceClient = bookingReferenceClient;
     }
 
+    // FIXME : Trop grosse !
+    // FIXME : Retourner une réservation
     public String makeReservation(ReservationRequestDto request) {
+        // FIXME : Retourner une topologie
         String data = trainDataClient.getTopology(request.trainId);
 
+        // FIXME: Déplacer (infra)
         Map<String, List<Topologie.TopologieSeat>> map = new HashMap<>();
         for (Topologie.TopologieSeat x : new Gson().fromJson(data, Topologie.class).seats.values()) {
             map.computeIfAbsent(x.coach, k -> new ArrayList<>()).add(x);
         }
-        Map.Entry<String, List<Topologie.TopologieSeat>> found = null;
-        for (Map.Entry<String, List<Topologie.TopologieSeat>> x : map.entrySet()) {
-            long count = 0L;
-            for (Topologie.TopologieSeat y : x.getValue()) {
-                if ("".equals(y.booking_reference)) {
-                    count++;
+        Map.Entry<String, List<Topologie.TopologieSeat>> wagonAvecPlace = null;
+        for (Map.Entry<String, List<Topologie.TopologieSeat>> wagon : map.entrySet()) {
+            long siegesDisponibles = 0L;
+            for (Topologie.TopologieSeat siege : wagon.getValue()) {
+                if ("".equals(siege.booking_reference)) {
+                    siegesDisponibles++;
                 }
             }
-            if (count >= request.seatCount) {
-                found = x;
+            if (siegesDisponibles >= request.seatCount) {
+                wagonAvecPlace = wagon;
                 break;
             }
         }
-        List<Seat> seats = new ArrayList<>();
-        if(found != null) {
-            List<Seat> list = new ArrayList<>();
+        List<Seat> siegesReserves = new ArrayList<>();
+        if(wagonAvecPlace != null) {
             long limit = request.seatCount;
-            for (Topologie.TopologieSeat y : found.getValue()) {
-                if ("".equals(y.booking_reference)) {
+            for (Topologie.TopologieSeat siege : wagonAvecPlace.getValue()) {
+                if ("".equals(siege.booking_reference)) {
                     if (limit-- == 0) break;
-                    Seat seat = new Seat(y.coach, y.seat_number);
-                    list.add(seat);
+                    Seat seat = new Seat(siege.coach, siege.seat_number);
+                    siegesReserves.add(seat);
                 }
             }
-            seats = list;
         }
 
-        if (!seats.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, seats, bookingReferenceClient.generateBookingReference());
+        if (!siegesReserves.isEmpty()) {
+            ReservationResponseDto reservation = new ReservationResponseDto(request.trainId, siegesReserves, bookingReferenceClient.generateBookingReference());
             this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
             return "{" +
                     "\"train_id\": \"" + reservation.trainId + "\", " +
