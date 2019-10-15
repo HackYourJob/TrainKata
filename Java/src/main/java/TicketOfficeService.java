@@ -30,7 +30,7 @@ public class TicketOfficeService {
     // FIXME : Retourner une réservation
     public Reservation makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
-        String topologie = trainDataClient.getTopology(reservationRequest.trainId);
+        String topologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
 
         // FIXME: Déplacer (infra)
         Map.Entry<String, List<Topologie.TopologieSeat>> wagonAvecPlace =
@@ -43,7 +43,7 @@ public class TicketOfficeService {
                     bookingReferenceClient.generateBookingReference(),
                     siegesReserves
             );
-            this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingReference, reservation.seats);
+            this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference, reservation.seats);
             return reservation;
         } else {
             return new Reservation(
