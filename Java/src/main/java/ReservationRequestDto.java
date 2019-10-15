@@ -8,4 +8,7 @@ public class ReservationRequestDto {
         this.seatCount = seatCount;
     }
 
+    public ReservationRequest toDomainModel(){
+       return new ReservationRequest(trainId, seatCount);
+    }
 }
