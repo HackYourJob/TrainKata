@@ -1,6 +1,7 @@
 import com.google.gson.Gson;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TicketOfficeService {
@@ -34,42 +35,34 @@ public class TicketOfficeService {
         String topologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
 
         // FIXME: Déplacer (infra)
-        var availableSeats = findAvailableSeats(reservationRequest, topologie);
+        var coachList = deserializeTopologie(topologie);
+        var availableSeats = selectAmongAvailableSeats(reservationRequest.seatCount, coachList);
         if (availableSeats.isEmpty()) {
             return Optional.empty();
         }
-        List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, availableSeats.get());
-
-        if (!siegesReserves.isEmpty()) {
-            Reservation reservation = new Reservation(
-                    reservationRequest.trainId,
-                    new BookingReference(bookingReferenceClient.generateBookingReference()),
-                    siegesReserves
-            );
-            this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
-            return Optional.of(reservation);
-        } else {
-            return Optional.empty();
-        }
+        Reservation reservation = new Reservation(
+                reservationRequest.trainId,
+                new BookingReference(bookingReferenceClient.generateBookingReference()),
+                availableSeats.get()
+        );
+        this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
+        return Optional.of(reservation);
     }
 
-    private List<Seat> selectSiegesDisponibles(ReservationRequest reservationRequest, List<Seat> siegesDisponibles) {
+    private List<Seat> selectSiegesDisponibles(int seatCount, List<Seat> siegesDisponibles) {
         return siegesDisponibles
                 .stream()
-                .limit(reservationRequest.seatCount)
+                .limit(seatCount)
                 .collect(Collectors.toList());
     }
 
-    // SeatsCount -> Topologie -> Option<Coach>
-
-    private Optional<List<Seat>> findAvailableSeats(ReservationRequest reservationRequest, String topologie) {
-        var coachList = deserializeTopologie(topologie);
-        for (var wagon: coachList) {
+    //FIXME type pour seatcount
+    private Optional<List<Seat>> selectAmongAvailableSeats(int seatCount, List<Coach> coaches) {
+        for (var wagon : coaches) {
             long siegesDisponibles = wagon.getAvailableSeats().size();
-            if (siegesDisponibles >= reservationRequest.seatCount) {
-                return Optional.of(wagon.getAvailableSeats());
+            if (siegesDisponibles >= seatCount) {
+                return Optional.of(selectSiegesDisponibles(seatCount, wagon.getAvailableSeats()));
             }
-
         }
         return Optional.empty();
     }
