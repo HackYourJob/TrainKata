@@ -1,7 +1,5 @@
 import domain.*;
-import domain.out.BookTrain;
-import domain.out.GenerateBookingReference;
-import domain.out.GetTopologie;
+import domain.in.MakeReservation;
 import infra.BookingReferenceClient;
 import infra.ReservationRequestDto;
 import infra.TrainDataClient;

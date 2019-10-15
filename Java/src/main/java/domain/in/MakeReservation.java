@@ -1,5 +1,9 @@
-package domain;
+package domain.in;
 
+import domain.BookingReference;
+import domain.Reservation;
+import domain.ReservationRequest;
+import domain.Topologie;
 import domain.out.BookTrain;
 import domain.out.GenerateBookingReference;
 import domain.out.GetTopologie;
