@@ -4,6 +4,7 @@ import infra.BookingReferenceClient;
 import infra.ReservationRequestDto;
 import infra.TopologieDto;
 import infra.TrainDataClient;
+import infra.train_data_client.GetTopologieAdapter;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,12 +12,14 @@ import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
+    private final GetTopologieAdapter topologieAdapter;
     private TrainDataClient trainDataClient;
     private BookingReferenceClient bookingReferenceClient;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
         this.trainDataClient = trainDataClient;
         this.bookingReferenceClient = bookingReferenceClient;
+        this.topologieAdapter = new GetTopologieAdapter(trainDataClient);
     }
 
     // FIXME: move to infra
@@ -34,11 +37,13 @@ public class TicketOfficeService {
     }
 
     // FIXME : Trop grosse !
-    // FIXME : Retourner une réservation
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
         // FIXME: Déplacer (infra)
-        Topologie topologie = getTopologie(reservationRequest.trainId);
+        Topologie topologie = topologieAdapter.getByTrainId(reservationRequest.trainId);
+
+
+        new MakeReservation().makeReservation(reservationRequest.seatCount, topologie);
 
         var availableSeats = topologie.tryToGetAvailableSeats(reservationRequest.seatCount);
         if (availableSeats.isEmpty()) {
@@ -56,12 +61,6 @@ public class TicketOfficeService {
         return Optional.of(reservation);
     }
 
-    private Topologie getTopologie(TrainId trainId) {
-        String serializedTopologie = trainDataClient.getTopology(trainId.toString());
-        var coachList = deserializeTopologie(serializedTopologie);
-        return new Topologie(coachList);
-    }
-
     private void bookTrain(Reservation reservation) {
         this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
     }
@@ -70,21 +69,5 @@ public class TicketOfficeService {
         return new BookingReference(bookingReferenceClient.generateBookingReference());
     }
 
-    private List<Coach> deserializeTopologie(String topologie) {
-        return new Gson().fromJson(topologie, TopologieDto.class).seats.values()
-                .stream()
-                .collect(Collectors.groupingBy(topologieSeatDto -> topologieSeatDto.coach))
-                .entrySet()
-                .stream()
-                .map(coach -> new Coach(
-                        new CoachId(coach.getKey()),
-                        coach.getValue().stream()
-                                .map(dto -> new CoachSeat(
-                                        new Seat(dto.coach, dto.seat_number),
-                                        dto.booking_reference.isEmpty()
-                                                ? SeatAvailability.AVAILABLE
-                                                : SeatAvailability.BOOKED)
-                                ).collect(Collectors.toList())))
-                .collect(Collectors.toList());
-    }
+
 }
