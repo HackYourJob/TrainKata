@@ -21,7 +21,7 @@ public class TicketOfficeService {
         }
         return "{" +
                 "\"train_id\": \"" + reservation.trainId + "\", " +
-                "\"booking_reference\": \"" + reservation.bookingReference + "\", " +
+                "\"booking_reference\": \"" + reservation.bookingReference.reference + "\", " +
                 "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
                 "}";
     }
@@ -40,15 +40,16 @@ public class TicketOfficeService {
         if (!siegesReserves.isEmpty()) {
             Reservation reservation = new Reservation(
                     reservationRequest.trainId,
-                    bookingReferenceClient.generateBookingReference(),
+                    new BookingReference(bookingReferenceClient.generateBookingReference()),
                     siegesReserves
             );
-            this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference, reservation.seats);
+            this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
             return reservation;
         } else {
+            // FIXME: ne pas retourner reservation
             return new Reservation(
                     reservationRequest.trainId,
-                    "",
+                    new BookingReference(""),
                     new ArrayList<>()
             );
         }
