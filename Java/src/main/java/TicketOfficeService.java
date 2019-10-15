@@ -16,10 +16,8 @@ public class TicketOfficeService {
     private final GetTopologie getTopologie;
     private final BookTrain bookTrain;
     private final GenerateBookingReference generateBookingReference;
-    private BookingReferenceClient bookingReferenceClient;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.bookingReferenceClient = bookingReferenceClient;
         this.getTopologie = new GetTopologieAdapter(trainDataClient);
         this.bookTrain = new BookingReferenceAdapter(bookingReferenceClient);
         this.generateBookingReference = new BookingReferenceAdapter(bookingReferenceClient);
@@ -39,29 +37,12 @@ public class TicketOfficeService {
                 "}";
     }
 
-    // FIXME : Trop grosse !
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
-        // FIXME : Retourner une topologie
-        // FIXME: Déplacer (infra)
-        Topologie topologie = getTopologie.getByTrainId(reservationRequest.trainId);
-
-
-        new MakeReservation().makeReservation(reservationRequest.seatCount, topologie);
-
-        var availableSeats = topologie.tryToGetAvailableSeats(reservationRequest.seatCount);
-        if (availableSeats.isEmpty()) {
-            return Optional.empty();
-        }
-        BookingReference bookingReference = generateBookingReference.execute();
-
-        Reservation reservation = new Reservation(
-                reservationRequest.trainId,
-                bookingReference,
-                availableSeats.get()
-        );
-
-        bookTrain.execute(reservation);
-        return Optional.of(reservation);
+        return new MakeReservation(
+                getTopologie,
+                bookTrain,
+                generateBookingReference
+        ).execute(reservationRequest);
     }
 
 }
