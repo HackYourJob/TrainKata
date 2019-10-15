@@ -1,25 +1,28 @@
-import com.google.gson.Gson;
 import domain.*;
+import domain.out.BookTrain;
+import domain.out.GenerateBookingReference;
+import domain.out.GetTopologie;
 import infra.BookingReferenceClient;
 import infra.ReservationRequestDto;
-import infra.TopologieDto;
 import infra.TrainDataClient;
+import infra.booking_reference_client.BookingReferenceAdapter;
 import infra.train_data_client.GetTopologieAdapter;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
-    private final GetTopologieAdapter topologieAdapter;
-    private TrainDataClient trainDataClient;
+    private final GetTopologie getTopologie;
+    private final BookTrain bookTrain;
+    private final GenerateBookingReference generateBookingReference;
     private BookingReferenceClient bookingReferenceClient;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.trainDataClient = trainDataClient;
         this.bookingReferenceClient = bookingReferenceClient;
-        this.topologieAdapter = new GetTopologieAdapter(trainDataClient);
+        this.getTopologie = new GetTopologieAdapter(trainDataClient);
+        this.bookTrain = new BookingReferenceAdapter(bookingReferenceClient);
+        this.generateBookingReference = new BookingReferenceAdapter(bookingReferenceClient);
     }
 
     // FIXME: move to infra
@@ -40,7 +43,7 @@ public class TicketOfficeService {
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
         // FIXME: Déplacer (infra)
-        Topologie topologie = topologieAdapter.getByTrainId(reservationRequest.trainId);
+        Topologie topologie = getTopologie.getByTrainId(reservationRequest.trainId);
 
 
         new MakeReservation().makeReservation(reservationRequest.seatCount, topologie);
@@ -49,7 +52,7 @@ public class TicketOfficeService {
         if (availableSeats.isEmpty()) {
             return Optional.empty();
         }
-        BookingReference bookingReference = generateBookingReference();
+        BookingReference bookingReference = generateBookingReference.execute();
 
         Reservation reservation = new Reservation(
                 reservationRequest.trainId,
@@ -57,17 +60,8 @@ public class TicketOfficeService {
                 availableSeats.get()
         );
 
-        bookTrain(reservation);
+        bookTrain.execute(reservation);
         return Optional.of(reservation);
     }
-
-    private void bookTrain(Reservation reservation) {
-        this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
-    }
-
-    private BookingReference generateBookingReference() {
-        return new BookingReference(bookingReferenceClient.generateBookingReference());
-    }
-
 
 }
