@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Coach {
@@ -18,5 +19,14 @@ public class Coach {
                 .filter(seat -> SeatAvailability.AVAILABLE.equals(seat.availability))
                 .map(coachSeat -> coachSeat.seat)
                 .collect(Collectors.toList());
+    }
+
+    public Optional<List<Seat>> tryToGetAvailableSeats(SeatCount seatCount) {
+        return Optional.of(
+                getAvailableSeats()
+                .stream()
+                .limit(seatCount.count)
+                .collect(Collectors.toList())
+        ).filter(availableSeats -> availableSeats.size() >= seatCount.count);
     }
 }

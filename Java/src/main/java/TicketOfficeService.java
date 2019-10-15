@@ -57,13 +57,10 @@ public class TicketOfficeService {
     }
 
     private Optional<List<Seat>> selectAmongAvailableSeats(SeatCount seatCount, List<Coach> coaches) {
-        for (var wagon : coaches) {
-            long siegesDisponibles = wagon.getAvailableSeats().size();
-            if (siegesDisponibles >= seatCount.count) {
-                return Optional.of(selectSiegesDisponibles(seatCount, wagon.getAvailableSeats()));
-            }
-        }
-        return Optional.empty();
+        return coaches
+                .stream()
+                .flatMap(coach -> coach.tryToGetAvailableSeats(seatCount).stream())
+                .findFirst();
     }
 
     private List<Coach> deserializeTopologie(String topologie) {
