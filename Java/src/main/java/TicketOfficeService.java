@@ -34,11 +34,11 @@ public class TicketOfficeService {
         String topologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
 
         // FIXME: Déplacer (infra)
-        var availableCoach = findWagonAvecPlaces(reservationRequest, topologie);
-        if (availableCoach.isEmpty()) {
+        var availableSeats = findAvailableSeats(reservationRequest, topologie);
+        if (availableSeats.isEmpty()) {
             return Optional.empty();
         }
-        List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, availableCoach.get().getAvailableSeats());
+        List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, availableSeats.get());
 
         if (!siegesReserves.isEmpty()) {
             Reservation reservation = new Reservation(
@@ -62,12 +62,12 @@ public class TicketOfficeService {
 
     // SeatsCount -> Topologie -> Option<Coach>
 
-    private Optional<Coach> findWagonAvecPlaces(ReservationRequest reservationRequest, String topologie) {
+    private Optional<List<Seat>> findAvailableSeats(ReservationRequest reservationRequest, String topologie) {
         var coachList = deserializeTopologie(topologie);
         for (var wagon: coachList) {
             long siegesDisponibles = wagon.getAvailableSeats().size();
             if (siegesDisponibles >= reservationRequest.seatCount) {
-                return Optional.of(wagon);
+                return Optional.of(wagon.getAvailableSeats());
             }
 
         }
