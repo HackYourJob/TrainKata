@@ -38,13 +38,13 @@ public class TicketOfficeService {
         List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, wagonAvecPlace);
 
         if (!siegesReserves.isEmpty()) {
-            ReservationResponseDto reservation = new ReservationResponseDto(reservationRequest.trainId, siegesReserves, bookingReferenceClient.generateBookingReference());
-            this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
-            return new Reservation(
-                    reservation.trainId,
-                    reservation.bookingId,
+            Reservation reservation = new Reservation(
+                    reservationRequest.trainId,
+                    bookingReferenceClient.generateBookingReference(),
                     siegesReserves
             );
+            this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingReference, reservation.seats);
+            return reservation;
         } else {
             return new Reservation(
                     reservationRequest.trainId,
