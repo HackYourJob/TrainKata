@@ -49,18 +49,17 @@ public class TicketOfficeService {
         return Optional.of(reservation);
     }
 
-    private List<Seat> selectSiegesDisponibles(int seatCount, List<Seat> siegesDisponibles) {
+    private List<Seat> selectSiegesDisponibles(SeatCount seatCount, List<Seat> siegesDisponibles) {
         return siegesDisponibles
                 .stream()
-                .limit(seatCount)
+                .limit(seatCount.count)
                 .collect(Collectors.toList());
     }
 
-    //FIXME type pour seatcount
-    private Optional<List<Seat>> selectAmongAvailableSeats(int seatCount, List<Coach> coaches) {
+    private Optional<List<Seat>> selectAmongAvailableSeats(SeatCount seatCount, List<Coach> coaches) {
         for (var wagon : coaches) {
             long siegesDisponibles = wagon.getAvailableSeats().size();
-            if (siegesDisponibles >= seatCount) {
+            if (siegesDisponibles >= seatCount.count) {
                 return Optional.of(selectSiegesDisponibles(seatCount, wagon.getAvailableSeats()));
             }
         }

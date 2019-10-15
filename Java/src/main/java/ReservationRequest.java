@@ -1,9 +1,9 @@
 public class ReservationRequest {
 
     public final TrainId trainId;
-    public final int seatCount;
+    public final SeatCount seatCount;
 
-    public ReservationRequest(TrainId trainId, int seatCount) {
+    public ReservationRequest(TrainId trainId, SeatCount seatCount) {
         this.trainId = trainId;
         this.seatCount = seatCount;
     }

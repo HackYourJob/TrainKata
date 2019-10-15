@@ -9,6 +9,6 @@ public class ReservationRequestDto {
     }
 
     public ReservationRequest toDomainModel(){
-       return new ReservationRequest(new TrainId(trainId), seatCount);
+       return new ReservationRequest(new TrainId(trainId), new SeatCount(seatCount));
     }
 }
