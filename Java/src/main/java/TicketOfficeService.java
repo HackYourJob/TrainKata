@@ -13,13 +13,22 @@ public class TicketOfficeService {
         this.bookingReferenceClient = bookingReferenceClient;
     }
 
-    public String makeReservation(ReservationRequestDto request) {
-        return  makeReservation(request.toDomainModel());
+    public String makeReservation(ReservationRequestDto reservationRequest) {
+        Reservation reservation = makeReservation(reservationRequest.toDomainModel());
+
+        if (reservation.seats.isEmpty()) {
+            return "{\"train_id\": \"" + reservation.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
+        }
+        return "{" +
+                "\"train_id\": \"" + reservation.trainId + "\", " +
+                "\"booking_reference\": \"" + reservation.bookingReference + "\", " +
+                "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
+                "}";
     }
 
     // FIXME : Trop grosse !
     // FIXME : Retourner une réservation
-    public String makeReservation(ReservationRequest reservationRequest) {
+    public Reservation makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
         String topologie = trainDataClient.getTopology(reservationRequest.trainId);
 
@@ -31,13 +40,17 @@ public class TicketOfficeService {
         if (!siegesReserves.isEmpty()) {
             ReservationResponseDto reservation = new ReservationResponseDto(reservationRequest.trainId, siegesReserves, bookingReferenceClient.generateBookingReference());
             this.bookingReferenceClient.bookTrain(reservation.trainId, reservation.bookingId, reservation.seats);
-            return "{" +
-                    "\"train_id\": \"" + reservation.trainId + "\", " +
-                    "\"booking_reference\": \"" + reservation.bookingId + "\", " +
-                    "\"seats\": [" + reservation.seats.stream().map(s -> "\"" + s.seatNumber + s.coach + "\"").collect(Collectors.joining(", ")) + "]" +
-                    "}";
+            return new Reservation(
+                    reservation.trainId,
+                    reservation.bookingId,
+                    siegesReserves
+            );
         } else {
-            return "{\"train_id\": \"" + reservationRequest.trainId + "\", \"booking_reference\": \"\", \"seats\": []}";
+            return new Reservation(
+                    reservationRequest.trainId,
+                    "",
+                    new ArrayList<>()
+            );
         }
     }
 
