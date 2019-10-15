@@ -1,6 +1,7 @@
 import domain.Seat;
 import infra.BookingReferenceClient;
 import infra.ReservationRequestDto;
+import infra.TicketOfficeService;
 import infra.TrainDataClient;
 import org.junit.*;
 

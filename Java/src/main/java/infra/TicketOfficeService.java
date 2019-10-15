@@ -1,3 +1,5 @@
+package infra;
+
 import domain.*;
 import domain.in.MakeReservation;
 import infra.BookingReferenceClient;
