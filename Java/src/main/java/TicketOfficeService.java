@@ -64,13 +64,10 @@ public class TicketOfficeService {
     }
 
     private List<Seat> selectSiegesDisponibles(ReservationRequest reservationRequest, List<Seat> siegesDisponibles) {
-        List<Seat> siegesReserves = new ArrayList<>();
-        long limit = reservationRequest.seatCount;
-        for (Seat siege :siegesDisponibles) {
-                if (limit-- == 0) break;
-                siegesReserves.add(siege);
-        }
-        return siegesReserves;
+        return siegesDisponibles
+                .stream()
+                .limit(reservationRequest.seatCount)
+                .collect(Collectors.toList());
     }
 
     private Map.Entry<String, List<TopologieDto.TopologieSeatDto>> findWagonAvecPlaces(ReservationRequest reservationRequest, String topologie) {
