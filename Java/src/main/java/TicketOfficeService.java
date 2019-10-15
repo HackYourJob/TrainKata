@@ -13,14 +13,14 @@ import java.util.stream.Collectors;
 
 public class TicketOfficeService {
 
-    private final GetTopologie getTopologie;
-    private final BookTrain bookTrain;
-    private final GenerateBookingReference generateBookingReference;
+    private final MakeReservation makeReservation;
 
     public TicketOfficeService(TrainDataClient trainDataClient, BookingReferenceClient bookingReferenceClient) {
-        this.getTopologie = new GetTopologieAdapter(trainDataClient);
-        this.bookTrain = new BookingReferenceAdapter(bookingReferenceClient);
-        this.generateBookingReference = new BookingReferenceAdapter(bookingReferenceClient);
+        this.makeReservation = new MakeReservation(
+                new GetTopologieAdapter(trainDataClient),
+                new BookingReferenceAdapter(bookingReferenceClient),
+                new BookingReferenceAdapter(bookingReferenceClient)
+        );
     }
 
     // FIXME: move to infra
@@ -38,11 +38,7 @@ public class TicketOfficeService {
     }
 
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
-        return new MakeReservation(
-                getTopologie,
-                bookTrain,
-                generateBookingReference
-        ).execute(reservationRequest);
+        return makeReservation.execute(reservationRequest);
     }
 
 }
