@@ -1,13 +1,11 @@
 package domain.in;
 
-import domain.BookingReference;
-import domain.Reservation;
-import domain.ReservationRequest;
-import domain.Topologie;
+import domain.*;
 import domain.out.BookTrain;
 import domain.out.GenerateBookingReference;
 import domain.out.GetTopologie;
 
+import java.util.List;
 import java.util.Optional;
 
 public class MakeReservation {
@@ -23,23 +21,22 @@ public class MakeReservation {
     }
 
     public Optional<Reservation> execute(ReservationRequest reservationRequest) {
-        // FIXME : Retourner une topologie
-        // FIXME: Déplacer (infra)
-        Topologie topologie = getTopologie.getByTrainId(reservationRequest.trainId);
 
-        var availableSeats = topologie.tryToGetAvailableSeats(reservationRequest.seatCount);
-        if (availableSeats.isEmpty()) {
-            return Optional.empty();
-        }
+        return getTopologie.getByTrainId(reservationRequest.trainId)
+                .tryToGetAvailableSeats(reservationRequest.seatCount)
+                .map(seats -> confirmReservation(reservationRequest,seats));
+    }
+
+    private Reservation confirmReservation(ReservationRequest reservationRequest, List<Seat> availableSeats) {
         BookingReference bookingReference = generateBookingReference.execute();
 
         Reservation reservation = new Reservation(
                 reservationRequest.trainId,
                 bookingReference,
-                availableSeats.get()
+                availableSeats
         );
 
         bookTrain.execute(reservation);
-        return Optional.of(reservation);
+        return reservation;
     }
 }
