@@ -1,3 +1,7 @@
+package infra;
+
+import domain.Seat;
+
 import java.util.List;
 
 public interface BookingReferenceClient {

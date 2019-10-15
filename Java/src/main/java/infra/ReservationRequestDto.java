@@ -1,3 +1,8 @@
+package infra;
+
+import domain.ReservationRequest;
+import domain.SeatCount;
+import domain.TrainId;
 
 public class ReservationRequestDto {
 	public final String trainId;

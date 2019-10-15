@@ -1,4 +1,9 @@
 import com.google.gson.Gson;
+import domain.*;
+import infra.BookingReferenceClient;
+import infra.ReservationRequestDto;
+import infra.TopologieDto;
+import infra.TrainDataClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +37,8 @@ public class TicketOfficeService {
     // FIXME : Retourner une réservation
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
-        String serializedTopologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
-
         // FIXME: Déplacer (infra)
-        var coachList = deserializeTopologie(serializedTopologie);
-        var topologie = new Topologie(coachList);
+        Topologie topologie = getTopologie(reservationRequest.trainId);
 
         var availableSeats = topologie.tryToGetAvailableSeats(reservationRequest.seatCount);
         if (availableSeats.isEmpty()) {
@@ -54,6 +56,12 @@ public class TicketOfficeService {
         return Optional.of(reservation);
     }
 
+    private Topologie getTopologie(TrainId trainId) {
+        String serializedTopologie = trainDataClient.getTopology(trainId.toString());
+        var coachList = deserializeTopologie(serializedTopologie);
+        return new Topologie(coachList);
+    }
+
     private void bookTrain(Reservation reservation) {
         this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
     }
@@ -61,7 +69,6 @@ public class TicketOfficeService {
     private BookingReference generateBookingReference() {
         return new BookingReference(bookingReferenceClient.generateBookingReference());
     }
-
 
     private List<Coach> deserializeTopologie(String topologie) {
         return new Gson().fromJson(topologie, TopologieDto.class).seats.values()

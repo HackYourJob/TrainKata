@@ -1,13 +1,10 @@
-import org.hamcrest.CoreMatchers;
+import domain.Seat;
+import infra.BookingReferenceClient;
+import infra.ReservationRequestDto;
+import infra.TrainDataClient;
 import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
 
 public class TicketOfficeServiceTest {
     private static final String TrainId = "9043-2018-05-24";

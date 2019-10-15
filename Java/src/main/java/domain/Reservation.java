@@ -1,3 +1,7 @@
+package domain;
+
+import domain.BookingReference;
+
 import java.util.List;
 
 public class Reservation {

@@ -1,3 +1,5 @@
+package domain;
+
 public class ReservationRequest {
 
     public final TrainId trainId;

@@ -1,3 +1,5 @@
+package infra;
+
 import java.util.Map;
 
 // FIXME: Dans le domain ?

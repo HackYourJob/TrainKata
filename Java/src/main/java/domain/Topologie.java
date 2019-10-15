@@ -1,3 +1,9 @@
+package domain;
+
+import domain.Coach;
+import domain.Seat;
+import domain.SeatCount;
+
 import java.util.List;
 import java.util.Optional;
 
