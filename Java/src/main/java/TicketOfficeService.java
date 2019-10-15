@@ -42,14 +42,26 @@ public class TicketOfficeService {
         if (availableSeats.isEmpty()) {
             return Optional.empty();
         }
+        BookingReference bookingReference = generateBookingReference();
+
         Reservation reservation = new Reservation(
                 reservationRequest.trainId,
-                new BookingReference(bookingReferenceClient.generateBookingReference()),
+                bookingReference,
                 availableSeats.get()
         );
-        this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
+
+        bookTrain(reservation);
         return Optional.of(reservation);
     }
+
+    private void bookTrain(Reservation reservation) {
+        this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
+    }
+
+    private BookingReference generateBookingReference() {
+        return new BookingReference(bookingReferenceClient.generateBookingReference());
+    }
+
 
     private List<Coach> deserializeTopologie(String topologie) {
         return new Gson().fromJson(topologie, TopologieDto.class).seats.values()
