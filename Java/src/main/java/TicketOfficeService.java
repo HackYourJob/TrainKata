@@ -34,10 +34,11 @@ public class TicketOfficeService {
         String topologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
 
         // FIXME: Déplacer (infra)
-        Map.Entry<String, List<TopologieDto.TopologieSeatDto>> wagonAvecPlace =
-                findWagonAvecPlaces(reservationRequest, topologie);
-        List<Seat> siegesDisponibles= getSiegesDisponibles(wagonAvecPlace);
-        List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, siegesDisponibles);
+        var availableCoach = findWagonAvecPlaces(reservationRequest, topologie);
+        if (availableCoach.isEmpty()) {
+            return Optional.empty();
+        }
+        List<Seat> siegesReserves = selectSiegesDisponibles(reservationRequest, availableCoach.get().getAvailableSeats());
 
         if (!siegesReserves.isEmpty()) {
             Reservation reservation = new Reservation(
@@ -52,17 +53,6 @@ public class TicketOfficeService {
         }
     }
 
-    private List<Seat> getSiegesDisponibles(Map.Entry<String,
-            List<TopologieDto.TopologieSeatDto>> wagonAvecPlace) {
-        if(wagonAvecPlace==null){
-            return Collections.emptyList();
-        }
-        return wagonAvecPlace.getValue()
-                .stream()
-                .filter(topologieSeatDto -> "".equals(topologieSeatDto.booking_reference))
-                .map(topologieSeatDto -> new Seat(topologieSeatDto.coach, topologieSeatDto.seat_number)).collect(Collectors.toList());
-    }
-
     private List<Seat> selectSiegesDisponibles(ReservationRequest reservationRequest, List<Seat> siegesDisponibles) {
         return siegesDisponibles
                 .stream()
@@ -70,24 +60,35 @@ public class TicketOfficeService {
                 .collect(Collectors.toList());
     }
 
-    private Map.Entry<String, List<TopologieDto.TopologieSeatDto>> findWagonAvecPlaces(ReservationRequest reservationRequest, String topologie) {
-        Map.Entry<String, List<TopologieDto.TopologieSeatDto>> wagonAvecPlace = null;
-        Map<String, List<TopologieDto.TopologieSeatDto>> map = new HashMap<>();
-        for (TopologieDto.TopologieSeatDto x : new Gson().fromJson(topologie, TopologieDto.class).seats.values()) {
-            map.computeIfAbsent(x.coach, k -> new ArrayList<>()).add(x);
-        }
-        for (Map.Entry<String, List<TopologieDto.TopologieSeatDto>> wagon : map.entrySet()) {
-            long siegesDisponibles = 0L;
-            for (TopologieDto.TopologieSeatDto siege : wagon.getValue()) {
-                if ("".equals(siege.booking_reference)) {
-                    siegesDisponibles++;
-                }
-            }
+    // SeatsCount -> Topologie -> Option<Coach>
+
+    private Optional<Coach> findWagonAvecPlaces(ReservationRequest reservationRequest, String topologie) {
+        var coachList = deserializeTopologie(topologie);
+        for (var wagon: coachList) {
+            long siegesDisponibles = wagon.getAvailableSeats().size();
             if (siegesDisponibles >= reservationRequest.seatCount) {
-                wagonAvecPlace = wagon;
-                break;
+                return Optional.of(wagon);
             }
+
         }
-        return wagonAvecPlace;
+        return Optional.empty();
+    }
+
+    private List<Coach> deserializeTopologie(String topologie) {
+        return new Gson().fromJson(topologie, TopologieDto.class).seats.values()
+                .stream()
+                .collect(Collectors.groupingBy(topologieSeatDto -> topologieSeatDto.coach))
+                .entrySet()
+                .stream()
+                .map(coach -> new Coach(
+                        new CoachId(coach.getKey()),
+                        coach.getValue().stream()
+                                .map(dto -> new CoachSeat(
+                                        new Seat(dto.coach, dto.seat_number),
+                                        dto.booking_reference.isEmpty()
+                                                ? SeatAvailability.AVAILABLE
+                                                : SeatAvailability.BOOKED)
+                                ).collect(Collectors.toList())))
+                .collect(Collectors.toList());
     }
 }
