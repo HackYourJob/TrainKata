@@ -32,11 +32,13 @@ public class TicketOfficeService {
     // FIXME : Retourner une réservation
     public Optional<Reservation> makeReservation(ReservationRequest reservationRequest) {
         // FIXME : Retourner une topologie
-        String topologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
+        String serializedTopologie = trainDataClient.getTopology(reservationRequest.trainId.toString());
 
         // FIXME: Déplacer (infra)
-        var coachList = deserializeTopologie(topologie);
-        var availableSeats = selectAmongAvailableSeats(reservationRequest.seatCount, coachList);
+        var coachList = deserializeTopologie(serializedTopologie);
+        var topologie = new Topologie(coachList);
+
+        var availableSeats = topologie.tryToGetAvailableSeats(reservationRequest.seatCount);
         if (availableSeats.isEmpty()) {
             return Optional.empty();
         }
@@ -47,20 +49,6 @@ public class TicketOfficeService {
         );
         this.bookingReferenceClient.bookTrain(reservation.trainId.toString(), reservation.bookingReference.reference, reservation.seats);
         return Optional.of(reservation);
-    }
-
-    private List<Seat> selectSiegesDisponibles(SeatCount seatCount, List<Seat> siegesDisponibles) {
-        return siegesDisponibles
-                .stream()
-                .limit(seatCount.count)
-                .collect(Collectors.toList());
-    }
-
-    private Optional<List<Seat>> selectAmongAvailableSeats(SeatCount seatCount, List<Coach> coaches) {
-        return coaches
-                .stream()
-                .flatMap(coach -> coach.tryToGetAvailableSeats(seatCount).stream())
-                .findFirst();
     }
 
     private List<Coach> deserializeTopologie(String topologie) {
