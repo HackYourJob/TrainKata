@@ -1,11 +1,9 @@
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Topologie {
-    public Map<String, TopologieSeat> seats;
 
-    public class TopologieSeat {
-        public String booking_reference;
-        public int seat_number;
-        public String coach;
-    }
+    List<Seat> seats = new ArrayList<>();
+
+
 }
