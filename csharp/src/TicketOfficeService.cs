@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using TrainKata.Options;
 
 namespace TrainKata
 {
@@ -19,26 +20,20 @@ namespace TrainKata
 
         public string MakeReservation(ReservationRequestDto request)
         {
-            var seachsByCoaches = GetTrainTopology(request);
-            var availableSeatsByCoaches = GetAvailableCoaches(request, seachsByCoaches);
-            var seats = GetAvailableSeats(request, availableSeatsByCoaches);
-
-            if (HasReservation(seats))
-            {
-                var reservation = ConfirmReservation(request, seats);
-                return ReturnConfirmedReservation(reservation);
-            } 
-            else 
-            {
-                return ReturnFailedReservation(request);
-            }
+            return
+                GetTrainTopology(request)
+                .Map(topology => GetAvailableCoaches(request, topology))
+                .Map(availableCoach => GetAvailableSeats(request, availableCoach))
+                .Map(availableSeats => Maybe.Some(ConfirmReservation(request, availableSeats)))
+                .Map(reservation => Maybe.Some(ReturnConfirmedReservation(reservation)))
+                .OrDefault(ReturnFailedReservation(request));
         }
 
-        private Dictionary<string, List<TopologieDto.TopologieSeatDto>> GetTrainTopology(ReservationRequestDto request)
+        private Maybe<Dictionary<string, List<TopologieDto.TopologieSeatDto>>> GetTrainTopology(ReservationRequestDto request)
         {
             var trainTopology = _trainDataClient.GetTopology(request.TrainId);
 
-            return DeserializeTrainTopology(trainTopology);
+            return Maybe.Some(DeserializeTrainTopology(trainTopology));
         }
 
         private static Dictionary<string, List<TopologieDto.TopologieSeatDto>> DeserializeTrainTopology(string trainTopology)
@@ -49,28 +44,27 @@ namespace TrainKata
                 .ToDictionary(coach => coach.Key, coach => coach.ToList());
         }
 
-        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> seachsByCoaches)
+        private static Maybe<List<TopologieDto.TopologieSeatDto>> GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> topology)
         {
-            foreach (var coach in seachsByCoaches)
+            foreach (var coach in topology)
             {
                 var availableSeats = coach.Value.Count(IsNotReserved);
                 if (availableSeats >= request.SeatCount)
                 {
-                    return coach;
+                    return Maybe.Some(coach.Value);
                 }
             }
 
-            return null;
+            return Maybe.None<List<TopologieDto.TopologieSeatDto>>();
         }
 
-        private static List<SeatDto> GetAvailableSeats(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? availableSeatsByCoaches)
+        private static Maybe<List<SeatDto>> GetAvailableSeats(ReservationRequestDto request, List<TopologieDto.TopologieSeatDto> availableCoach)
         {
-            if (!availableSeatsByCoaches.HasValue) return new List<SeatDto>();
-
-            var availableSeats = availableSeatsByCoaches.Value.Value.Where(IsNotReserved).ToArray();
-            return availableSeats.Length >= request.SeatCount 
-                ? availableSeats.Take(request.SeatCount).Select(seat => new SeatDto(seat.coach, seat.seat_number)).ToList() 
-                : new List<SeatDto>();
+            var availableSeats = availableCoach.Where(IsNotReserved).ToArray();
+            return availableSeats.Length >= request.SeatCount
+                ? Maybe.Some(availableSeats.Take(request.SeatCount)
+                    .Select(seat => new SeatDto(seat.coach, seat.seat_number)).ToList())
+                : Maybe.None<List<SeatDto>>();
         }
 
         private static bool IsNotReserved(TopologieDto.TopologieSeatDto seatDto)
