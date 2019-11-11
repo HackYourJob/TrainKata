@@ -38,64 +38,44 @@ namespace TrainKata
         {
             var trainTopology = _trainDataClient.GetTopology(request.TrainId);
 
-            var seachsByCoaches = DeserializeTrainTopology(trainTopology);
-            return seachsByCoaches;
+            return DeserializeTrainTopology(trainTopology);
         }
 
         private static Dictionary<string, List<TopologieDto.TopologieSeatDto>> DeserializeTrainTopology(string trainTopology)
         {
-            var seachsByCoaches = new Dictionary<string, List<Topologie.TopologieSeat>>();
-            foreach (var seat in JsonConvert.DeserializeObject<Topologie>(trainTopology).seats.Values)
-            {
-                if (!seachsByCoaches.ContainsKey(seat.coach))
-                    seachsByCoaches.Add(seat.coach, new List<Topologie.TopologieSeat>());
-                seachsByCoaches[seat.coach].Add(seat);
-            }
-
-            return seachsByCoaches;
+            return JsonConvert.DeserializeObject<TopologieDto>(trainTopology)
+                .seats.Values
+                .GroupBy(seat => seat.coach)
+                .ToDictionary(coach => coach.Key, coach => coach.ToList());
         }
 
         private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> seachsByCoaches)
         {
-            KeyValuePair<string, List<Topologie.TopologieSeat>>? availableSeatsByCoaches = null;
             foreach (var coach in seachsByCoaches)
             {
-                var availableSeats = 0L;
-                foreach (var seat in coach.Value)
-                {
-                    if ("".Equals(seat.booking_reference))
-                    {
-                        availableSeats++;
-                    }
-                }
-
+                var availableSeats = coach.Value.Count(IsNotReserved);
                 if (availableSeats >= request.SeatCount)
                 {
-                    availableSeatsByCoaches = coach;
-                    break;
+                    return coach;
                 }
             }
 
-            return availableSeatsByCoaches;
+            return null;
         }
 
         private static List<SeatDto> GetAvailableSeats(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? availableSeatsByCoaches)
         {
-            var seats = new List<Seat>();
-            if (availableSeatsByCoaches.HasValue)
-            {
-                long limit = request.SeatCount;
-                foreach (var seat in availableSeatsByCoaches.Value.Value)
-                {
-                    if ("".Equals(seat.booking_reference))
-                    {
-                        if (limit-- == 0) break;
-                        seats.Add(new Seat(seat.coach, seat.seat_number));
-                    }
-                }
-            }
+            if (!availableSeatsByCoaches.HasValue) return new List<SeatDto>();
 
-            return seats;
+            var availableSeats = availableSeatsByCoaches.Value.Value.Where(IsNotReserved).ToArray();
+            return availableSeats.Length >= request.SeatCount 
+                ? availableSeats.Take(request.SeatCount).Select(seat => new SeatDto(seat.coach, seat.seat_number)).ToList() 
+                : new List<SeatDto>();
+        }
+
+        private static bool IsNotReserved(TopologieDto.TopologieSeatDto seatDto)
+        {
+            return "".Equals(seatDto.booking_reference);
         }
 
         private static bool HasReservation(List<SeatDto> seats)
@@ -105,8 +85,8 @@ namespace TrainKata
 
         private ReservationResponseDto ConfirmReservation(ReservationRequestDto request, List<SeatDto> seats)
         {
-            var reservation =
-                new ReservationResponseDto(request.TrainId, seats, _bookingReferenceClient.GenerateBookingReference());
+            var bookingId = _bookingReferenceClient.GenerateBookingReference();
+            var reservation = new ReservationResponseDto(request.TrainId, seats, bookingId);
             _bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
             return reservation;
         }
