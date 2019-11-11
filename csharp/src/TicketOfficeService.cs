@@ -19,42 +19,42 @@ namespace TrainKata
 
         public string MakeReservation(ReservationRequestDto request)
         {
-            var data = _trainDataClient.GetTopology(request.TrainId);
+            var trainTopology = _trainDataClient.GetTopology(request.TrainId);
 
-            var map = new Dictionary<string, List<Topologie.TopologieSeat>>();
-            foreach (var x in JsonConvert.DeserializeObject<Topologie>(data).seats.Values)
+            var seachsByCoaches = new Dictionary<string, List<Topologie.TopologieSeat>>();
+            foreach (var seat in JsonConvert.DeserializeObject<Topologie>(trainTopology).seats.Values)
             {
-                if (!map.ContainsKey(x.coach)) map.Add(x.coach, new List<Topologie.TopologieSeat>());
-                map[x.coach].Add(x);
+                if (!seachsByCoaches.ContainsKey(seat.coach)) seachsByCoaches.Add(seat.coach, new List<Topologie.TopologieSeat>());
+                seachsByCoaches[seat.coach].Add(seat);
             }
-            var found = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
-            foreach (var x in map)
+            var availableSeatsByCoaches = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
+            foreach (var coach in seachsByCoaches)
             {
-                var count = 0L;
-                foreach (var y in x.Value)
+                var availableSeats = 0L;
+                foreach (var seat in coach.Value)
                 {
-                    if ("".Equals(y.booking_reference)) {
-                        count++;
+                    if ("".Equals(seat.booking_reference)) {
+                        availableSeats++;
                     }
                 }
-                if (count >= request.SeatCount) {
-                    found = x;
+                if (availableSeats >= request.SeatCount) {
+                    availableSeatsByCoaches = coach;
                     break;
                 }
             }
             var seats = new List<Seat>();
-            if(!found.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
-                var list = new List<Seat>();
+            if(!availableSeatsByCoaches.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
+                var seats2 = new List<Seat>();
                 long limit = request.SeatCount;
-                foreach (var y in found.Value)
+                foreach (var seat1 in availableSeatsByCoaches.Value)
                 {
-                    if ("".Equals(y.booking_reference)) {
+                    if ("".Equals(seat1.booking_reference)) {
                         if (limit-- == 0) break;
-                        var seat = new Seat(y.coach, y.seat_number);
-                        list.Add(seat);
+                        var seat = new Seat(seat1.coach, seat1.seat_number);
+                        seats2.Add(seat);
                     }
                 }
-                seats = list;
+                seats = seats2;
             }
 
             if (seats.Count != 0) {
