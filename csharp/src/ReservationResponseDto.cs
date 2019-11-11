@@ -6,17 +6,26 @@ using System.Threading.Tasks;
 
 namespace KataTrainReservation
 {
-    public class Reservation
+    public class ReservationResponseDto
     {
         public string TrainId { get; private set; }
         public string BookingId { get; private set; }
         public List<Seat> Seats { get; private set; }
 
-        public Reservation(string trainId, string bookingId, List<Seat> seats)
+        public ReservationResponseDto(string trainId, List<Seat> seats, string bookingId)
         {
             this.TrainId = trainId;
             this.BookingId = bookingId;
             this.Seats = seats;
+        }
+
+        public override string ToString()
+        {
+            return "ReservationResponseDto{" +
+                   "trainId='" + TrainId + '\'' +
+                   ", bookingId='" + BookingId + '\'' +
+                   ", seats=" + Seats +
+                   '}';
         }
     }
 }
