@@ -44,17 +44,14 @@ namespace TrainKata
             }
             var seats = new List<Seat>();
             if(!availableSeatsByCoaches.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
-                var seats2 = new List<Seat>();
                 long limit = request.SeatCount;
-                foreach (var seat1 in availableSeatsByCoaches.Value)
+                foreach (var seat in availableSeatsByCoaches.Value)
                 {
-                    if ("".Equals(seat1.booking_reference)) {
+                    if ("".Equals(seat.booking_reference)) {
                         if (limit-- == 0) break;
-                        var seat = new Seat(seat1.coach, seat1.seat_number);
-                        seats2.Add(seat);
+                        seats.Add(new Seat(seat.coach, seat.seat_number));
                     }
                 }
-                seats = seats2;
             }
 
             if (seats.Count != 0) {
