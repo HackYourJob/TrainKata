@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using TrainKata.Domain;
 
-namespace TrainKata
+namespace TrainKata.Infra
 {
     public class TopologieDto
     {

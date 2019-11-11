@@ -1,4 +1,6 @@
-﻿namespace TrainKata
+﻿using TrainKata.Domain;
+
+namespace TrainKata.Infra
 {
     public class ReservationRequestDto
     {

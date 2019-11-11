@@ -1,4 +1,4 @@
-﻿namespace TrainKata
+﻿namespace TrainKata.Domain
 {
     public struct TrainId
     {

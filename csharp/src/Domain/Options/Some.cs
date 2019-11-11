@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TrainKata.Options
+namespace TrainKata.Domain.Options
 {
     public class Some<T> : Maybe<T>
     {

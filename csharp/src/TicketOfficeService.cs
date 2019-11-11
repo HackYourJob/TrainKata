@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
-using TrainKata.Options;
+using TrainKata.Domain;
+using TrainKata.Domain.Options;
+using TrainKata.Infra;
 
 namespace TrainKata
 {

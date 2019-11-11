@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TrainKata.Infra;
 using Xunit;
 
 namespace TrainKata.Tests

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TrainKata
+namespace TrainKata.Domain
 {
     public struct Reservation
     {
