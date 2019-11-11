@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using TrainKata.Domain.Options;
 using TrainKata.Domain.PortOut;
 
@@ -20,41 +20,31 @@ namespace TrainKata.Domain.PortIn
 
         public Maybe<Reservation> Execute(ReservationRequest request)
         {
-            return _getTrainTopology.ById(request.TrainId)
-                .Map(topology => GetAvailableCoaches(request, topology))
-                .Map(availableCoach => GetAvailableSeats(request, availableCoach))
-                .Map(availableSeats => Maybe.Some(ConfirmReservation(request, availableSeats)));
+            return GetTopologyOf(request.TrainId)
+                .Map(TryToReserveSeats(request))
+                .Map(ConfirmReservation(request));
         }
 
-        private static Maybe<Coach> GetAvailableCoaches(ReservationRequest request, Topology topology)
+        private Maybe<Topology> GetTopologyOf(TrainId id)
         {
-            foreach (var coach in topology.Coaches)
+            return _getTrainTopology.ById(id);
+        }
+
+        private static Func<Topology, Maybe<List<SeatId>>> TryToReserveSeats(ReservationRequest request)
+        {
+            return topology => topology.TryToReserveSeats(request.SeatsNumber);
+        }
+
+        private Func<List<SeatId>, Maybe<Reservation>> ConfirmReservation(ReservationRequest request)
+        {
+            return seats =>
             {
-                var availableSeats = coach.Seats.Count(seat => seat.IsAvailable());
-                if (availableSeats >= request.SeatsNumber)
-                {
+                var reference = _generateBookingReference.Generate();
+                var reservation = new Reservation(request.TrainId, reference, seats);
+                _confirmReservation.Execute(reservation);
 
-                    return Maybe.Some(coach);
-                }
-            }
-
-            return Maybe.None<Coach>();
-        }
-
-        private static Maybe<List<SeatId>> GetAvailableSeats(ReservationRequest request, Coach availableCoach)
-        {
-            var availableSeats = availableCoach.Seats.Where(seat => seat.IsAvailable()).Select(seat => seat.Id).ToArray();
-            return availableSeats.Length >= request.SeatsNumber
-                ? Maybe.Some(availableSeats.Take(request.SeatsNumber).ToList())
-                : Maybe.None<List<SeatId>>();
-        }
-        
-        private Reservation ConfirmReservation(ReservationRequest request, List<SeatId> seats)
-        {
-            var reference = _generateBookingReference.Generate();
-            var reservation = new Reservation(request.TrainId, reference, seats);
-            _confirmReservation.Execute(reservation);
-            return reservation;
+                return Maybe.Some(reservation);
+            };
         }
     }
 }

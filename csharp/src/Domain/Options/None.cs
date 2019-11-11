@@ -13,5 +13,10 @@ namespace TrainKata.Domain.Options
         {
             return defaultValue;
         }
+
+        public bool HasValue()
+        {
+            return false;
+        }
     }
 }

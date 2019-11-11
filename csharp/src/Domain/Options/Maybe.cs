@@ -7,6 +7,8 @@ namespace TrainKata.Domain.Options
         Maybe<TResult> Map<TResult>(Func<T, Maybe<TResult>> apply);
 
         T OrDefault(T defaultValue);
+
+        bool HasValue();
     }
 
     public static class Maybe
