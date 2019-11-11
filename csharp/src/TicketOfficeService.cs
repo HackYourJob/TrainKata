@@ -61,6 +61,7 @@ namespace KataTrainReservation
 
             if (!(seats.Count == 0)) {
                 ReservationResponseDto reservation = new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
+                bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
                 return "{" +
                         "\"train_id\": \"" + reservation.TrainId + "\", " +
                         "\"booking_reference\": \"" + reservation.BookingId + "\", " +
