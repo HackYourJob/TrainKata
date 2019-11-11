@@ -10,7 +10,7 @@ namespace TrainKata.Domain
 
         public IEnumerable<SeatId> Seats { get; }
 
-        public Reservation(TrainId trainId, BookingReference bookingReference, IEnumerable<SeatId> seats)
+        public Reservation(TrainId trainId, BookingReference bookingReference, ICollection<SeatId> seats)
         {
             TrainId = trainId;
             BookingReference = bookingReference;

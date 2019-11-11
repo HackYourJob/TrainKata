@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using TrainKata.Infra;
+using TrainKata.Infra.BookingReferenceClient;
+using TrainKata.Infra.TrainDataClient;
 using Xunit;
 
 namespace TrainKata.Tests

@@ -1,4 +1,4 @@
-﻿namespace TrainKata.Infra
+﻿namespace TrainKata.Infra.TrainDataClient
 {
     public interface ITrainDataClient
     {
