@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace KataTrainReservation
 {
-    public class ReservationRequest
+    public class ReservationRequestDto
     {
         public string TrainId { get; private set; }
         public int SeatCount { get; private set; }
 
-        public ReservationRequest(string trainId, int seatCount)
+        public ReservationRequestDto(string trainId, int seatCount)
         {
             this.TrainId = trainId;
             this.SeatCount = seatCount;
