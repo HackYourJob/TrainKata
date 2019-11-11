@@ -6,6 +6,6 @@ namespace TrainKata
     {
         string GenerateBookingReference();
 
-        void BookTrain(string trainId, string bookingReference, List<Seat> seats);
+        void BookTrain(string trainId, string bookingReference, List<SeatDto> seats);
     }
 }

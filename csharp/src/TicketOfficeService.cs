@@ -34,7 +34,7 @@ namespace TrainKata
             }
         }
 
-        private Dictionary<string, List<Topologie.TopologieSeat>> GetTrainTopology(ReservationRequestDto request)
+        private Dictionary<string, List<TopologieDto.TopologieSeatDto>> GetTrainTopology(ReservationRequestDto request)
         {
             var trainTopology = _trainDataClient.GetTopology(request.TrainId);
 
@@ -42,7 +42,7 @@ namespace TrainKata
             return seachsByCoaches;
         }
 
-        private static Dictionary<string, List<Topologie.TopologieSeat>> DeserializeTrainTopology(string trainTopology)
+        private static Dictionary<string, List<TopologieDto.TopologieSeatDto>> DeserializeTrainTopology(string trainTopology)
         {
             var seachsByCoaches = new Dictionary<string, List<Topologie.TopologieSeat>>();
             foreach (var seat in JsonConvert.DeserializeObject<Topologie>(trainTopology).seats.Values)
@@ -55,7 +55,7 @@ namespace TrainKata
             return seachsByCoaches;
         }
 
-        private static KeyValuePair<string, List<Topologie.TopologieSeat>>? GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<Topologie.TopologieSeat>> seachsByCoaches)
+        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> seachsByCoaches)
         {
             KeyValuePair<string, List<Topologie.TopologieSeat>>? availableSeatsByCoaches = null;
             foreach (var coach in seachsByCoaches)
@@ -79,7 +79,7 @@ namespace TrainKata
             return availableSeatsByCoaches;
         }
 
-        private static List<Seat> GetAvailableSeats(ReservationRequestDto request, KeyValuePair<string, List<Topologie.TopologieSeat>>? availableSeatsByCoaches)
+        private static List<SeatDto> GetAvailableSeats(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>? availableSeatsByCoaches)
         {
             var seats = new List<Seat>();
             if (availableSeatsByCoaches.HasValue)
@@ -98,12 +98,12 @@ namespace TrainKata
             return seats;
         }
 
-        private static bool HasReservation(List<Seat> seats)
+        private static bool HasReservation(List<SeatDto> seats)
         {
             return seats.Count != 0;
         }
 
-        private ReservationResponseDto ConfirmReservation(ReservationRequestDto request, List<Seat> seats)
+        private ReservationResponseDto ConfirmReservation(ReservationRequestDto request, List<SeatDto> seats)
         {
             var reservation =
                 new ReservationResponseDto(request.TrainId, seats, _bookingReferenceClient.GenerateBookingReference());

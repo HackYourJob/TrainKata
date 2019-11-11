@@ -1,17 +1,17 @@
 ﻿namespace TrainKata
 {
-    public class Seat
+    public class SeatDto
     {
         public string Coach { get; }
         public int SeatNumber { get; }
 
-        public Seat(string coach, int seatNumber)
+        public SeatDto(string coach, int seatNumber)
         {
             Coach = coach;
             SeatNumber = seatNumber;
         }
 
-        private bool Equals(Seat other)
+        private bool Equals(SeatDto other)
         {
             return Coach == other.Coach && SeatNumber == other.SeatNumber;
         }
@@ -21,7 +21,7 @@
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((Seat) obj);
+            return Equals((SeatDto) obj);
         }
 
         public override int GetHashCode()

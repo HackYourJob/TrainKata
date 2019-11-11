@@ -27,9 +27,9 @@ namespace TrainKata.Tests
             Assert.Equal(TrainId, _bookingReferenceClient.TrainIdBooked);
             Assert.Equal(BookingReference, _bookingReferenceClient.ReferenceBooked);
             Assert.Equal(3, _bookingReferenceClient.SeatsBooked.Count);
-            Assert.Equal(new Seat("A", 1), _bookingReferenceClient.SeatsBooked[0]);
-            Assert.Equal(new Seat("A", 2), _bookingReferenceClient.SeatsBooked[1]);
-            Assert.Equal(new Seat("A", 3), _bookingReferenceClient.SeatsBooked[2]);
+            Assert.Equal(new SeatDto("A", 1), _bookingReferenceClient.SeatsBooked[0]);
+            Assert.Equal(new SeatDto("A", 2), _bookingReferenceClient.SeatsBooked[1]);
+            Assert.Equal(new SeatDto("A", 3), _bookingReferenceClient.SeatsBooked[2]);
         }
 
         [Fact]
@@ -108,7 +108,7 @@ namespace TrainKata.Tests
 
             public string ReferenceBooked { get; private set; }
 
-            public List<Seat> SeatsBooked { get; private set; }
+            public List<SeatDto> SeatsBooked { get; private set; }
 
             public bool Booked { get; private set; }
 
@@ -119,7 +119,7 @@ namespace TrainKata.Tests
                 return _bookingReference;
             }
 
-            public void BookTrain(string trainId, string bookingReference, List<Seat> seats)
+            public void BookTrain(string trainId, string bookingReference, List<SeatDto> seats)
             {
                 TrainIdBooked = trainId;
                 ReferenceBooked = bookingReference;
