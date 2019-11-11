@@ -11,6 +11,15 @@ namespace TrainKata
             public string booking_reference;
             public int seat_number;
             public string coach;
+
+            public Seat ToSeat()
+            {
+                return new Seat(
+                    new SeatId(seat_number, coach),
+                    booking_reference == "" 
+                        ? Seat.SeatStatus.Available 
+                        : Seat.SeatStatus.Reserved);
+            }
         }
     }
 }

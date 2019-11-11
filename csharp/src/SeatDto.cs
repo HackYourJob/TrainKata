@@ -11,6 +11,12 @@
             SeatNumber = seatNumber;
         }
 
+        public SeatDto(SeatId id)
+        {
+            Coach = id.CoachId;
+            SeatNumber = id.Number;
+        }
+
         private bool Equals(SeatDto other)
         {
             return Coach == other.Coach && SeatNumber == other.SeatNumber;

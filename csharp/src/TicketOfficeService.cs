@@ -18,8 +18,10 @@ namespace TrainKata
             _bookingReferenceClient = bookingReferenceClient;
         }
 
-        public string MakeReservation(ReservationRequestDto request)
+        public string MakeReservation(ReservationRequestDto requestDto)
         {
+            var request = requestDto.ToRequest();
+
             return
                 GetTrainTopology(request)
                 .Map(topology => GetAvailableCoaches(request, topology))
@@ -29,72 +31,64 @@ namespace TrainKata
                 .OrDefault(ReturnFailedReservation(request));
         }
 
-        private Maybe<Dictionary<string, List<TopologieDto.TopologieSeatDto>>> GetTrainTopology(ReservationRequestDto request)
+        private Maybe<Topology> GetTrainTopology(ReservationRequest request)
         {
-            var trainTopology = _trainDataClient.GetTopology(request.TrainId);
+            var trainTopology = _trainDataClient.GetTopology(request.TrainId.Id);
 
             return Maybe.Some(DeserializeTrainTopology(trainTopology));
         }
 
-        private static Dictionary<string, List<TopologieDto.TopologieSeatDto>> DeserializeTrainTopology(string trainTopology)
+        private static Topology DeserializeTrainTopology(string trainTopology)
         {
-            return JsonConvert.DeserializeObject<TopologieDto>(trainTopology)
+            return new Topology(
+                JsonConvert.DeserializeObject<TopologieDto>(trainTopology)
                 .seats.Values
                 .GroupBy(seat => seat.coach)
-                .ToDictionary(coach => coach.Key, coach => coach.ToList());
+                .Select(coach => new Coach(coach.Select(seat => seat.ToSeat()).ToArray()))
+                .ToArray());;
         }
 
-        private static Maybe<List<TopologieDto.TopologieSeatDto>> GetAvailableCoaches(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> topology)
+        private static Maybe<Coach> GetAvailableCoaches(ReservationRequest request, Topology topology)
         {
-            foreach (var coach in topology)
+            foreach (var coach in topology.Coaches)
             {
-                var availableSeats = coach.Value.Count(IsNotReserved);
-                if (availableSeats >= request.SeatCount)
+                var availableSeats = coach.Seats.Count(seat => seat.IsAvailable());
+                if (availableSeats >= request.SeatsNumber)
                 {
-                    return Maybe.Some(coach.Value);
+
+                    return Maybe.Some(coach);
                 }
             }
 
-            return Maybe.None<List<TopologieDto.TopologieSeatDto>>();
+            return Maybe.None<Coach>();
         }
 
-        private static Maybe<List<SeatDto>> GetAvailableSeats(ReservationRequestDto request, List<TopologieDto.TopologieSeatDto> availableCoach)
+        private static Maybe<List<SeatId>> GetAvailableSeats(ReservationRequest request, Coach availableCoach)
         {
-            var availableSeats = availableCoach.Where(IsNotReserved).ToArray();
-            return availableSeats.Length >= request.SeatCount
-                ? Maybe.Some(availableSeats.Take(request.SeatCount)
-                    .Select(seat => new SeatDto(seat.coach, seat.seat_number)).ToList())
-                : Maybe.None<List<SeatDto>>();
+            var availableSeats = availableCoach.Seats.Where(seat => seat.IsAvailable()).Select(seat => seat.Id).ToArray();
+            return availableSeats.Length >= request.SeatsNumber
+                ? Maybe.Some(availableSeats.Take(request.SeatsNumber).ToList())
+                : Maybe.None<List<SeatId>>();
         }
 
-        private static bool IsNotReserved(TopologieDto.TopologieSeatDto seatDto)
+        private Reservation ConfirmReservation(ReservationRequest request, List<SeatId> seats)
         {
-            return "".Equals(seatDto.booking_reference);
-        }
-
-        private static bool HasReservation(List<SeatDto> seats)
-        {
-            return seats.Count != 0;
-        }
-
-        private ReservationResponseDto ConfirmReservation(ReservationRequestDto request, List<SeatDto> seats)
-        {
-            var bookingId = _bookingReferenceClient.GenerateBookingReference();
-            var reservation = new ReservationResponseDto(request.TrainId, seats, bookingId);
-            _bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
+            var reference = _bookingReferenceClient.GenerateBookingReference();
+            var reservation = new Reservation(request.TrainId, new BookingReference(reference), seats);
+            _bookingReferenceClient.BookTrain(reservation.TrainId.Id, reservation.BookingReference.Reference, reservation.Seats.Select(id => new SeatDto(id)).ToList());
             return reservation;
         }
 
-        private static string ReturnConfirmedReservation(ReservationResponseDto reservation)
+        private static string ReturnConfirmedReservation(Reservation reservation)
         {
             return "{" +
                    "\"train_id\": \"" + reservation.TrainId + "\", " +
-                   "\"booking_reference\": \"" + reservation.BookingId + "\", " +
-                   "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) + "]" +
+                   "\"booking_reference\": \"" + reservation.BookingReference + "\", " +
+                   "\"seats\": [" + String.Join(", ", reservation.Seats.Select(id => "\"" + id + "\"")) + "]" +
                    "}";
         }
 
-        private static string ReturnFailedReservation(ReservationRequestDto request)
+        private static string ReturnFailedReservation(ReservationRequest request)
         {
             return "{\"train_id\": \"" + request.TrainId + "\", \"booking_reference\": \"\", \"seats\": []}";
         }

@@ -10,5 +10,10 @@
             TrainId = trainId;
             SeatCount = seatCount;
         }
+
+        public ReservationRequest ToRequest()
+        {
+            return new ReservationRequest(new TrainId(TrainId), SeatCount);
+        }
     }
 }
