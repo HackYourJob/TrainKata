@@ -1,35 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace KataTrainReservation
+﻿namespace TrainKata
 {
     public class Seat
     {
-        public string Coach { get; private set; }
-        public int SeatNumber { get; private set; }
+        public string Coach { get; }
+        public int SeatNumber { get; }
 
         public Seat(string coach, int seatNumber)
         {
-            this.Coach = coach;
-            this.SeatNumber = seatNumber;
+            Coach = coach;
+            SeatNumber = seatNumber;
+        }
+
+        private bool Equals(Seat other)
+        {
+            return Coach == other.Coach && SeatNumber == other.SeatNumber;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Seat) obj);
         }
 
         public override int GetHashCode()
         {
-            return base.GetHashCode();
-        }
-
-        /// <summary>
-        /// N.B. this is not how you would override equals in a production environment. :)
-        /// </summary>
-        public override bool Equals(object obj)
-        {
-            Seat other = obj as Seat;
-
-            return this.Coach == other.Coach && this.SeatNumber == other.SeatNumber;
+            unchecked
+            {
+                return ((Coach != null ? Coach.GetHashCode() : 0) * 397) ^ SeatNumber;
+            }
         }
     }
 }

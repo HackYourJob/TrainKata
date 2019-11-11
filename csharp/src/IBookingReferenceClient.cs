@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace KataTrainReservation
+namespace TrainKata
 {
     public interface IBookingReferenceClient
     {

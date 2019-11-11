@@ -1,22 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace KataTrainReservation
+namespace TrainKata
 {
     public class ReservationResponseDto
     {
-        public string TrainId { get; private set; }
-        public string BookingId { get; private set; }
-        public List<Seat> Seats { get; private set; }
+        public string TrainId { get; }
+        public string BookingId { get; }
+        public List<Seat> Seats { get; }
 
         public ReservationResponseDto(string trainId, List<Seat> seats, string bookingId)
         {
-            this.TrainId = trainId;
-            this.BookingId = bookingId;
-            this.Seats = seats;
+            TrainId = trainId;
+            BookingId = bookingId;
+            Seats = seats;
         }
 
         public override string ToString()

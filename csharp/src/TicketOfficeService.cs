@@ -1,39 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace KataTrainReservation
+namespace TrainKata
 {
     public class TicketOfficeService
     {
 
-        private ITrainDataClient trainDataClient;
-        private IBookingReferenceClient bookingReferenceClient;
+        private readonly ITrainDataClient _trainDataClient;
+        private readonly IBookingReferenceClient _bookingReferenceClient;
 
         public TicketOfficeService(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
         {
-            this.trainDataClient = trainDataClient;
-            this.bookingReferenceClient = bookingReferenceClient;
+            _trainDataClient = trainDataClient;
+            _bookingReferenceClient = bookingReferenceClient;
         }
 
-        public String MakeReservation(ReservationRequestDto request)
+        public string MakeReservation(ReservationRequestDto request)
         {
-            string data = trainDataClient.GetTopology(request.TrainId);
+            var data = _trainDataClient.GetTopology(request.TrainId);
 
-            Dictionary<String, List<Topologie.TopologieSeat>> map = new Dictionary<string, List<Topologie.TopologieSeat>>();
-            foreach (Topologie.TopologieSeat x in JsonConvert.DeserializeObject<Topologie>(data).seats.Values)
+            var map = new Dictionary<string, List<Topologie.TopologieSeat>>();
+            foreach (var x in JsonConvert.DeserializeObject<Topologie>(data).seats.Values)
             {
                 if (!map.ContainsKey(x.coach)) map.Add(x.coach, new List<Topologie.TopologieSeat>());
                 map[x.coach].Add(x);
             }
-            KeyValuePair<string, List<Topologie.TopologieSeat>> found = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
-            foreach (KeyValuePair<string, List<Topologie.TopologieSeat>> x in map)
+            var found = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
+            foreach (var x in map)
             {
-                long count = 0L;
-                foreach (Topologie.TopologieSeat y in x.Value)
+                var count = 0L;
+                foreach (var y in x.Value)
                 {
                     if ("".Equals(y.booking_reference)) {
                         count++;
@@ -44,24 +42,24 @@ namespace KataTrainReservation
                     break;
                 }
             }
-            List<Seat> seats = new List<Seat>();
+            var seats = new List<Seat>();
             if(!found.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
-                List<Seat> list = new List<Seat>();
+                var list = new List<Seat>();
                 long limit = request.SeatCount;
-                foreach (Topologie.TopologieSeat y in found.Value)
+                foreach (var y in found.Value)
                 {
                     if ("".Equals(y.booking_reference)) {
                         if (limit-- == 0) break;
-                        Seat seat = new Seat(y.coach, y.seat_number);
+                        var seat = new Seat(y.coach, y.seat_number);
                         list.Add(seat);
                     }
                 }
                 seats = list;
             }
 
-            if (!(seats.Count == 0)) {
-                ReservationResponseDto reservation = new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
-                bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
+            if (seats.Count != 0) {
+                var reservation = new ReservationResponseDto(request.TrainId, seats, _bookingReferenceClient.GenerateBookingReference());
+                _bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
                 return "{" +
                         "\"train_id\": \"" + reservation.TrainId + "\", " +
                         "\"booking_reference\": \"" + reservation.BookingId + "\", " +
