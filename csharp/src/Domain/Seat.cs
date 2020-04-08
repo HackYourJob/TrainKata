@@ -3,14 +3,13 @@
     public struct Seat
     {
         public bool IsAvailable { get; }
-        public string CoachId { get; }
-        public int SeatNumber { get; }
 
-        public Seat(string bookingReference, string coachId, int seatNumber)
+        public SeatId Id { get; }
+
+        public Seat(SeatId id, bool isAvailable)
         {
-            CoachId = coachId;
-            SeatNumber = seatNumber;
-            IsAvailable = string.IsNullOrEmpty(bookingReference);
+            Id = id;
+            IsAvailable = isAvailable;
         }
     }
 }

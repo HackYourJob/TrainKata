@@ -42,7 +42,7 @@ namespace TrainKata
         {
             var coaches = 
                 Deserialize(sncfTopologyJson).GroupBy(o => o.coach).Select(values =>
-                        new Coach(values.Select(s => new Seat(s.booking_reference, s.coach, s.seat_number)).ToList()))
+                        new Coach(values.Select(s => new Seat(new SeatId(s.coach, s.seat_number), string.IsNullOrEmpty(s.booking_reference))).ToList()))
                     .ToList();
 
             return new Topology(coaches);
@@ -57,7 +57,7 @@ namespace TrainKata
         {
             if (availableSeats.Any())
             {
-                ReservationResponseDto reservation = new ReservationResponseDto(trainId.Value, availableSeats.Select(seat => new SeatDto(seat.CoachId, seat.SeatNumber)).ToList(),
+                ReservationResponseDto reservation = new ReservationResponseDto(trainId.Value, availableSeats.Select(seat => new SeatDto(seat.Id)).ToList(),
                     bookingReferenceClient.GenerateBookingReference());
                 bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
                 return reservation;

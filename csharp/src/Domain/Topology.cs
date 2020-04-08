@@ -5,19 +5,18 @@ namespace TrainKata.Domain
 {
     public struct Topology
     {
-        public List<Coach> Coaches { get; }
+        private readonly List<Coach> _coaches;
 
         public Topology(List<Coach> coaches)
         {
-            Coaches = coaches;
+            _coaches = coaches;
         }
 
         public List<Seat> FindAvailableSeats(int seatCount)
         {
-            return Coaches
-                .Where(coach => coach.Seats.Count(s => s.IsAvailable) >= seatCount)
-                .Select(c => c.FindAvailableSeats(seatCount))
-                .FirstOrDefault() ?? new List<Seat>();
+            return _coaches
+                .Select(coach => coach.TryToFindAvailableSeats(seatCount))
+                .FirstOrDefault(seats => seats.Any()) ?? new List<Seat>();
         }
     }
 }

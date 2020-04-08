@@ -1,9 +1,17 @@
-﻿namespace TrainKata.Infra
+﻿using TrainKata.Domain;
+
+namespace TrainKata.Infra
 {
     public class SeatDto
     {
         public string Coach { get; private set; }
         public int SeatNumber { get; private set; }
+        
+        public SeatDto(SeatId seatId)
+            : this(seatId.CoachId, seatId.SeatNumber)
+        {
+            
+        }
 
         public SeatDto(string coach, int seatNumber)
         {
