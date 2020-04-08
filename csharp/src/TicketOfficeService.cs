@@ -72,10 +72,10 @@ namespace KataTrainReservation
             return seats;
         }
 
-        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> FindCoachWithEnoughtAvailableSeats(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> train)
+        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> FindCoachWithEnoughtAvailableSeats(ReservationRequestDto request, Topology train)
         {
             KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> found = default;
-            foreach (KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> coach in train)
+            foreach (KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> coach in train.Train)
             {
                 long count = 0L;
                 foreach (TopologieDto.TopologieSeatDto seat in coach.Value)
@@ -96,7 +96,7 @@ namespace KataTrainReservation
             return found;
         }
 
-        private static Dictionary<string, List<TopologieDto.TopologieSeatDto>> SetupTrain(string sncfTopologyJson)
+        private static Topology SetupTrain(string sncfTopologyJson)
         {
             Dictionary<String, List<TopologieDto.TopologieSeatDto>> train = new Dictionary<string, List<TopologieDto.TopologieSeatDto>>();
             var coaches = 
@@ -109,7 +109,7 @@ namespace KataTrainReservation
                 train[seat.coach].Add(seat);
             }
 
-            return train;
+            return new Topology(train, coaches);
         }
 
         private static Dictionary<string, TopologieDto.TopologieSeatDto>.ValueCollection Deserialize(string sncfTopologyJson)
@@ -120,7 +120,15 @@ namespace KataTrainReservation
 
     public class Topology
     {
-        public List<Coach> Coaches { get; } = new List<Coach>();
+        public Dictionary<string, List<TopologieDto.TopologieSeatDto>> Train { get; }
+
+        public List<Coach> Coaches { get; }
+
+        public Topology(Dictionary<string, List<TopologieDto.TopologieSeatDto>> train, List<Coach> coaches)
+        {
+            Train = train;
+            Coaches = coaches;
+        }
     }
     public class Coach
     {
