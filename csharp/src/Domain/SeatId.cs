@@ -14,7 +14,7 @@
 
         public override string ToString()
         {
-            return CoachId + SeatNumber;
+            return SeatNumber + CoachId;
         }
     }
 }

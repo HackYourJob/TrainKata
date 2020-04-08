@@ -6,15 +6,21 @@ namespace TrainKata
     public class MakeReservation
     {
         private readonly GetTopology _getTopology;
+        private readonly BookReservation _bookReservation;
 
-        public MakeReservation(GetTopology getTopology)
+        public MakeReservation(GetTopology getTopology, BookReservation bookReservation)
         {
             _getTopology = getTopology;
+            _bookReservation = bookReservation;
         }
 
-        public void Execute(ReservationRequest reservationRequest)
+        public Reservation? Execute(ReservationRequest reservationRequest)
         {
             var topology = GetTopology(reservationRequest);
+
+            var availableSeats = TryToFindAvailableSeats(reservationRequest, topology);
+
+            return Book(reservationRequest.TrainId, availableSeats);
             // get topology
             // find available seats
             // book
@@ -25,9 +31,14 @@ namespace TrainKata
             return _getTopology.For(reservationRequest.TrainId);
         }
 
-        public List<Seat> TryToFindAvailableSeats(ReservationRequest request, Topology topology)
+        private List<Seat> TryToFindAvailableSeats(ReservationRequest request, Topology topology)
         {
             return topology.FindAvailableSeats(request.SeatCount);
+        }
+
+        private Reservation? Book(TrainId trainId, List<Seat> availableSeats)
+        {
+            return _bookReservation.Book(trainId, availableSeats);
         }
     }
 }

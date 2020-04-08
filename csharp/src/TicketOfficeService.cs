@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
 using TrainKata.Domain;
 using TrainKata.Infra;
 
@@ -9,50 +8,22 @@ namespace TrainKata
 {
     public class TicketOfficeService
     {
-
-        private ITrainDataClient trainDataClient;
         private IBookingReferenceClient bookingReferenceClient;
         private MakeReservation _makeReservation;
 
         public TicketOfficeService(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
         {
-            this.trainDataClient = trainDataClient;
             this.bookingReferenceClient = bookingReferenceClient;
-            _makeReservation = new MakeReservation(new GetSncfTopology(trainDataClient));
+            _makeReservation = new MakeReservation(new GetSncfTopology(trainDataClient), new BookSncfReservation(bookingReferenceClient));
         }
 
         public String MakeReservation(ReservationRequestDto request)
         {
             var trainId = new TrainId(request.TrainId);
 
-            var topology = GetTopology(trainId);
+            var reservation = _makeReservation.Execute(request.ToDomain());
 
-            var availableSeats = _makeReservation.TryToFindAvailableSeats(request.ToDomain(), topology);
-            var reservation = Book(trainId, availableSeats);
-
-            return SerializeReservation(reservation);
-        }
-
-        private Topology GetTopology(TrainId trainId)
-        {
-            string sncfTopologyJson = trainDataClient.GetTopology(trainId.Value);
-
-            return SetupTrain(sncfTopologyJson);
-        }
-
-        private static Topology SetupTrain(string sncfTopologyJson)
-        {
-            var coaches = 
-                Deserialize(sncfTopologyJson).GroupBy(o => o.coach).Select(values =>
-                        new Coach(values.Select(s => new Seat(new SeatId(s.coach, s.seat_number), string.IsNullOrEmpty(s.booking_reference))).ToList()))
-                    .ToList();
-
-            return new Topology(coaches);
-        }
-
-        private static Dictionary<string, TopologieDto.TopologieSeatDto>.ValueCollection Deserialize(string sncfTopologyJson)
-        {
-            return JsonConvert.DeserializeObject<TopologieDto>(sncfTopologyJson).seats.Values;
+            return SerializeReservation(reservation, trainId);
         }
 
         private ReservationResponseDto Book(TrainId trainId, List<Seat> availableSeats)
@@ -68,13 +39,18 @@ namespace TrainKata
             return new ReservationResponseDto(trainId.Value, new List<SeatDto>(), "");
         }
 
-        private static string SerializeReservation(ReservationResponseDto reservation)
+        private static string SerializeReservation(Reservation? reservation, TrainId trainId)
         {
+            if (!reservation.HasValue)
+            {
+                return "{\"train_id\": \"" + trainId.Value + "\", \"booking_reference\": \"\", \"seats\": []}";
+            }
+
             return "{" +
-                   "\"train_id\": \"" + reservation.TrainId + "\", " +
-                   "\"booking_reference\": \"" + reservation.BookingId + "\", " +
+                   "\"train_id\": \"" + reservation.Value.TrainId.Value + "\", " +
+                   "\"booking_reference\": \"" + reservation.Value.BookingId + "\", " +
                    "\"seats\": [" + String.Join(", ",
-                       reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
+                       reservation.Value.Seats.Select(seatId => "\"" + seatId + "\"")) +
                    "]" +
                    "}";
         }

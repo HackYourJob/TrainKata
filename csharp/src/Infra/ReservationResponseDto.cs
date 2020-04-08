@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using TrainKata.Domain;
 
 namespace TrainKata.Infra
 {
@@ -22,6 +24,11 @@ namespace TrainKata.Infra
                    ", bookingId='" + BookingId + '\'' +
                    ", seats=" + Seats +
                    '}';
+        }
+
+        public Reservation ToDomain()
+        {
+            return new Reservation(new TrainId(TrainId), Seats.Select(s => new SeatId(s.Coach, s.SeatNumber)).ToList(), BookingId);
         }
     }
 }
