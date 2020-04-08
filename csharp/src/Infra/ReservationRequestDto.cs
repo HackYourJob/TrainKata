@@ -1,4 +1,6 @@
-﻿namespace TrainKata.Infra
+﻿using TrainKata.Domain;
+
+namespace TrainKata.Infra
 {
     public class ReservationRequestDto
     {
@@ -9,6 +11,11 @@
         {
             this.TrainId = trainId;
             this.SeatCount = seatCount;
+        }
+
+        public ReservationRequest ToDomain()
+        {
+            return new ReservationRequest(new TrainId(TrainId), SeatCount);
         }
     }
 }

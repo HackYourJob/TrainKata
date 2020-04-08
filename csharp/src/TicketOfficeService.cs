@@ -12,11 +12,13 @@ namespace TrainKata
 
         private ITrainDataClient trainDataClient;
         private IBookingReferenceClient bookingReferenceClient;
+        private MakeReservation _makeReservation;
 
         public TicketOfficeService(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
         {
             this.trainDataClient = trainDataClient;
             this.bookingReferenceClient = bookingReferenceClient;
+            _makeReservation = new MakeReservation(new GetSncfTopology(trainDataClient));
         }
 
         public String MakeReservation(ReservationRequestDto request)
@@ -25,7 +27,7 @@ namespace TrainKata
 
             var topology = GetTopology(trainId);
 
-            var availableSeats = topology.FindAvailableSeats(request.SeatCount);
+            var availableSeats = _makeReservation.TryToFindAvailableSeats(request.ToDomain(), topology);
             var reservation = Book(trainId, availableSeats);
 
             return SerializeReservation(reservation);

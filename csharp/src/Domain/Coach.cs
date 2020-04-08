@@ -12,11 +12,6 @@ namespace TrainKata.Domain
             _seats = seats;
         }
 
-        private bool IsAvailable(int seatCount)
-        {
-            return _seats.Count(s => s.IsAvailable) >= seatCount;
-        }
-
         public List<Seat> TryToFindAvailableSeats(int requestSeatCount)
         {
             if (!IsAvailable(requestSeatCount))
@@ -28,6 +23,11 @@ namespace TrainKata.Domain
                 .Where(seat => seat.IsAvailable)
                 .Take(requestSeatCount)
                 .ToList();
+        }
+
+        private bool IsAvailable(int seatCount)
+        {
+            return _seats.Count(s => s.IsAvailable) >= seatCount;
         }
     }
 }
