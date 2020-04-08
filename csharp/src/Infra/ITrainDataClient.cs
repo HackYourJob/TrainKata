@@ -1,4 +1,4 @@
-﻿namespace KataTrainReservation
+﻿namespace TrainKata.Infra
 {
     public interface ITrainDataClient
     {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using KataTrainReservation;
+using TrainKata.Infra;
 using Xunit;
 
 namespace TrainKata.Tests

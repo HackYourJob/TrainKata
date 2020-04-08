@@ -1,22 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
+using TrainKata.Domain;
+using TrainKata.Infra;
 
-namespace KataTrainReservation
+namespace TrainKata
 {
-    public struct TrainId
-    {
-        public string Value { get; }
-
-        public TrainId(string value)
-        {
-            Value = value;
-        }
-    }
-
     public class TicketOfficeService
     {
 
@@ -34,9 +24,10 @@ namespace KataTrainReservation
             var trainId = new TrainId(request.TrainId);
 
             var topology = GetTopology(trainId);
-            var availableSeats = FindAvailableSeats(request.SeatCount, topology);
 
+            var availableSeats = topology.FindAvailableSeats(request.SeatCount);
             var reservation = Book(trainId, availableSeats);
+
             return SerializeReservation(reservation);
         }
 
@@ -62,11 +53,6 @@ namespace KataTrainReservation
             return JsonConvert.DeserializeObject<TopologieDto>(sncfTopologyJson).seats.Values;
         }
 
-        private static List<Seat> FindAvailableSeats(int seatCount, Topology topology)
-        {
-            return topology.FindAvailableSeats(seatCount);
-        }
-
         private ReservationResponseDto Book(TrainId trainId, List<Seat> availableSeats)
         {
             if (availableSeats.Any())
@@ -89,55 +75,6 @@ namespace KataTrainReservation
                        reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
                    "]" +
                    "}";
-        }
-    }
-
-    public struct Topology
-    {
-        public List<Coach> Coaches { get; }
-
-        public Topology(List<Coach> coaches)
-        {
-            Coaches = coaches;
-        }
-
-        public List<Seat> FindAvailableSeats(int seatCount)
-        {
-            return Coaches
-                .Where(coach => coach.Seats.Count(s => s.IsAvailable) >= seatCount)
-                .Select(c => c.FindAvailableSeats(seatCount))
-                .FirstOrDefault() ?? new List<Seat>();
-        }
-    }
-    public struct Coach
-    {
-        public List<Seat> Seats { get; }
-
-        public Coach(List<Seat> seats)
-        {
-            Seats = seats;
-        }
-
-        public List<Seat> FindAvailableSeats(int requestSeatCount)
-        {
-            return Seats
-                .Where(seat => seat.IsAvailable)
-                .Take(requestSeatCount)
-                .ToList();
-        }
-    }
-
-    public struct Seat
-    {
-        public bool IsAvailable { get; }
-        public string CoachId { get; }
-        public int SeatNumber { get; }
-
-        public Seat(string bookingReference, string coachId, int seatNumber)
-        {
-            CoachId = coachId;
-            SeatNumber = seatNumber;
-            IsAvailable = string.IsNullOrEmpty(bookingReference);
         }
     }
 }
