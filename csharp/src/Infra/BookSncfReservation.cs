@@ -18,9 +18,11 @@ namespace TrainKata
         {
             if (availableSeats.Any())
             {
-                ReservationResponseDto reservation = new ReservationResponseDto(trainId.Value, availableSeats.Select(seat => new SeatDto(seat.Id)).ToList(), _bookingReferenceClient.GenerateBookingReference());
-                _bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
-                return reservation.ToDomain();
+                var bookingReference = _bookingReferenceClient.GenerateBookingReference();
+
+                _bookingReferenceClient.BookTrain(trainId.Value, bookingReference, availableSeats.Select(seat => new SeatDto(seat.Id)).ToList());
+                
+                return new Reservation(trainId, availableSeats.Select(s => s.Id).ToList(), bookingReference);
             }
 
             return null;

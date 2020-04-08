@@ -8,9 +8,9 @@ namespace TrainKata.Infra
     {
         public string TrainId { get; private set; }
         public string BookingId { get; private set; }
-        public List<SeatDto> Seats { get; private set; }
+        public List<string> Seats { get; private set; }
 
-        public ReservationResponseDto(string trainId, List<SeatDto> seats, string bookingId)
+        public ReservationResponseDto(string trainId, List<string> seats, string bookingId)
         {
             this.TrainId = trainId;
             this.BookingId = bookingId;
@@ -26,9 +26,14 @@ namespace TrainKata.Infra
                    '}';
         }
 
-        public Reservation ToDomain()
+        public static ReservationResponseDto Succeeded(Reservation reservation)
         {
-            return new Reservation(new TrainId(TrainId), Seats.Select(s => new SeatId(s.Coach, s.SeatNumber)).ToList(), BookingId);
+            return new ReservationResponseDto(reservation.TrainId.Value, reservation.Seats.Select(s => s.ToString()).ToList(), reservation.BookingId);
+        }
+
+        public static ReservationResponseDto Refused(TrainId trainId)
+        {
+            return new ReservationResponseDto(trainId.Value, new List<string>(), "");
         }
     }
 }
