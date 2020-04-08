@@ -3,13 +3,23 @@ using TrainKata.Infra;
 
 namespace TrainKata
 {
-    public class TicketOfficeService
+    public class MakeReservationAdapter
     {
         private readonly MakeReservation _makeReservation;
 
-        public TicketOfficeService(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
+        public MakeReservationAdapter(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
+            : this(new MakeReservation(new GetSncfTopology(trainDataClient), new BookSncfReservation(bookingReferenceClient)))
         {
-            _makeReservation = new MakeReservation(new GetSncfTopology(trainDataClient), new BookSncfReservation(bookingReferenceClient));
+        }
+
+        public MakeReservationAdapter(GetTopology getTopology, BookReservation bookReservation)
+            : this(new MakeReservation(getTopology, bookReservation))
+        {
+        }
+
+        public MakeReservationAdapter(MakeReservation makeReservation)
+        {
+            _makeReservation = makeReservation;
         }
 
         public string MakeReservation(ReservationRequestDto request)

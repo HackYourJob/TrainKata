@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using TrainKata.Domain;
 
 namespace TrainKata
@@ -21,9 +22,6 @@ namespace TrainKata
             var availableSeats = TryToFindAvailableSeats(reservationRequest, topology);
 
             return Book(reservationRequest.TrainId, availableSeats);
-            // get topology
-            // find available seats
-            // book
         }
 
         private Topology GetTopology(ReservationRequest reservationRequest)
@@ -38,7 +36,12 @@ namespace TrainKata
 
         private Reservation? Book(TrainId trainId, List<Seat> availableSeats)
         {
-            return _bookReservation.Book(trainId, availableSeats);
+            if (availableSeats.Any())
+            {
+                return _bookReservation.Book(trainId, availableSeats);
+            }
+
+            return null;
         }
     }
 }
