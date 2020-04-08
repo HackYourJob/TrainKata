@@ -5,6 +5,6 @@ namespace TrainKata
 {
     public interface BookReservation
     {
-        Reservation? Book(TrainId trainId, List<Seat> availableSeats);
+        Reservation Book(TrainId trainId, List<Seat> availableSeats);
     }
 }

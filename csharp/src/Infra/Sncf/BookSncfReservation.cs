@@ -14,18 +14,16 @@ namespace TrainKata
             _bookingReferenceClient = bookingReferenceClient;
         }
 
-        public Reservation? Book(TrainId trainId, List<Seat> availableSeats)
+        public Reservation Book(TrainId trainId, List<Seat> availableSeats)
         {
-            if (availableSeats.Any())
-            {
-                var bookingReference = _bookingReferenceClient.GenerateBookingReference();
+            var bookingReference = _bookingReferenceClient.GenerateBookingReference();
 
-                _bookingReferenceClient.BookTrain(trainId.Value, bookingReference, availableSeats.Select(seat => new SeatDto(seat.Id)).ToList());
-                
-                return new Reservation(trainId, availableSeats.Select(s => s.Id).ToList(), bookingReference);
-            }
+            _bookingReferenceClient.BookTrain(
+                trainId.Value, 
+                bookingReference,
+                availableSeats.Select(seat => new SeatDto(seat.Id)).ToList());
 
-            return null;
+            return new Reservation(trainId, availableSeats.Select(s => s.Id).ToList(), bookingReference);
         }
     }
 }
