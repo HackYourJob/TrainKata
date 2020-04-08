@@ -33,9 +33,8 @@ namespace KataTrainReservation
         {
             var trainId = new TrainId(request.TrainId);
 
-            var train = GetTopology(trainId);
-            var foundCoach = FindCoachWithEnoughtAvailableSeats(request.SeatCount, train);
-            var availableSeats = FindAvailableSeats(request.SeatCount, foundCoach);
+            var topology = GetTopology(trainId);
+            var availableSeats = FindAvailableSeats(request.SeatCount, topology);
 
             var reservation = Book(trainId, availableSeats);
             return SerializeReservation(reservation);
@@ -43,20 +42,29 @@ namespace KataTrainReservation
 
         private Topology GetTopology(TrainId trainId)
         {
-            string data = trainDataClient.GetTopology(trainId.Value);
+            string sncfTopologyJson = trainDataClient.GetTopology(trainId.Value);
 
-            return SetupTrain(data);
+            return SetupTrain(sncfTopologyJson);
         }
 
-        private static string SerializeReservation(ReservationResponseDto reservation)
+        private static Topology SetupTrain(string sncfTopologyJson)
         {
-            return "{" +
-                   "\"train_id\": \"" + reservation.TrainId + "\", " +
-                   "\"booking_reference\": \"" + reservation.BookingId + "\", " +
-                   "\"seats\": [" + String.Join(", ",
-                       reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
-                   "]" +
-                   "}";
+            var coaches = 
+                Deserialize(sncfTopologyJson).GroupBy(o => o.coach).Select(values =>
+                        new Coach(values.Select(s => new Seat(s.booking_reference, s.coach, s.seat_number)).ToList()))
+                    .ToList();
+
+            return new Topology(coaches);
+        }
+
+        private static Dictionary<string, TopologieDto.TopologieSeatDto>.ValueCollection Deserialize(string sncfTopologyJson)
+        {
+            return JsonConvert.DeserializeObject<TopologieDto>(sncfTopologyJson).seats.Values;
+        }
+
+        private static List<Seat> FindAvailableSeats(int seatCount, Topology topology)
+        {
+            return topology.FindAvailableSeats(seatCount);
         }
 
         private ReservationResponseDto Book(TrainId trainId, List<Seat> availableSeats)
@@ -72,59 +80,33 @@ namespace KataTrainReservation
             return new ReservationResponseDto(trainId.Value, new List<SeatDto>(), "");
         }
 
-        private static List<Seat> FindAvailableSeats(int requestSeatCount, Coach? foundCoach)
+        private static string SerializeReservation(ReservationResponseDto reservation)
         {
-            if (foundCoach.HasValue)
-            {
-                return foundCoach.Value.Seats
-                    .Where(seat => seat.IsAvailable)
-                    .Take(requestSeatCount)
-                    .ToList();
-            }
-
-            return new List<Seat>();
-        }
-
-        private static Coach? FindCoachWithEnoughtAvailableSeats(int seatCount, Topology train)
-        {
-            return train.Coaches
-                .Where(coach => coach.Seats.Count(s => s.IsAvailable) >= seatCount)
-                .Select(c => (Coach?)c)
-                .FirstOrDefault();
-        }
-
-        private static Topology SetupTrain(string sncfTopologyJson)
-        {
-            Dictionary<String, List<TopologieDto.TopologieSeatDto>> train = new Dictionary<string, List<TopologieDto.TopologieSeatDto>>();
-            var coaches = 
-                Deserialize(sncfTopologyJson).GroupBy(o => o.coach).Select(values =>
-                new Coach(values.Select(s => new Seat(s.booking_reference, s.coach, s.seat_number)).ToList()))
-                .ToList();
-            foreach (TopologieDto.TopologieSeatDto seat in Deserialize(sncfTopologyJson))
-            {
-                if (!train.ContainsKey(seat.coach)) train.Add(seat.coach, new List<TopologieDto.TopologieSeatDto>());
-                train[seat.coach].Add(seat);
-            }
-
-            return new Topology(train, coaches);
-        }
-
-        private static Dictionary<string, TopologieDto.TopologieSeatDto>.ValueCollection Deserialize(string sncfTopologyJson)
-        {
-            return JsonConvert.DeserializeObject<TopologieDto>(sncfTopologyJson).seats.Values;
+            return "{" +
+                   "\"train_id\": \"" + reservation.TrainId + "\", " +
+                   "\"booking_reference\": \"" + reservation.BookingId + "\", " +
+                   "\"seats\": [" + String.Join(", ",
+                       reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
+                   "]" +
+                   "}";
         }
     }
 
     public struct Topology
     {
-        public Dictionary<string, List<TopologieDto.TopologieSeatDto>> Legacy { get; }
-
         public List<Coach> Coaches { get; }
 
-        public Topology(Dictionary<string, List<TopologieDto.TopologieSeatDto>> legacy, List<Coach> coaches)
+        public Topology(List<Coach> coaches)
         {
-            Legacy = legacy;
             Coaches = coaches;
+        }
+
+        public List<Seat> FindAvailableSeats(int seatCount)
+        {
+            return Coaches
+                .Where(coach => coach.Seats.Count(s => s.IsAvailable) >= seatCount)
+                .Select(c => c.FindAvailableSeats(seatCount))
+                .FirstOrDefault() ?? new List<Seat>();
         }
     }
     public struct Coach
@@ -134,6 +116,14 @@ namespace KataTrainReservation
         public Coach(List<Seat> seats)
         {
             Seats = seats;
+        }
+
+        public List<Seat> FindAvailableSeats(int requestSeatCount)
+        {
+            return Seats
+                .Where(seat => seat.IsAvailable)
+                .Take(requestSeatCount)
+                .ToList();
         }
     }
 
