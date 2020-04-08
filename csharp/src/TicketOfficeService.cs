@@ -28,12 +28,12 @@ namespace KataTrainReservation
             var availableCoach = FindCoachWithEnoughtAvailableSeats(request, train);
             var availableSeats = FindAvailableSeats(request, availableCoach);
 
-            return TryBook(request, availableSeats);
+            var reservation = Book(request, availableSeats);
+            return SerializeReservation(reservation);
         }
 
-        private string TryBook(ReservationRequestDto request, List<Seat> availableSeats)
+        private static string SerializeReservation(ReservationResponseDto reservation)
         {
-            var reservation = Book(request, availableSeats);
             return "{" +
                    "\"train_id\": \"" + reservation.TrainId + "\", " +
                    "\"booking_reference\": \"" + reservation.BookingId + "\", " +
