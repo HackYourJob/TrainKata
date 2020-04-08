@@ -10,9 +10,9 @@ namespace KataTrainReservation
     {
         public string TrainId { get; private set; }
         public string BookingId { get; private set; }
-        public List<Seat> Seats { get; private set; }
+        public List<SeatDto> Seats { get; private set; }
 
-        public ReservationResponseDto(string trainId, List<Seat> seats, string bookingId)
+        public ReservationResponseDto(string trainId, List<SeatDto> seats, string bookingId)
         {
             this.TrainId = trainId;
             this.BookingId = bookingId;
