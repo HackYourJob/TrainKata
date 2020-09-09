@@ -32,8 +32,8 @@ namespace KataTrainReservation
             }).ToList());
             
             var firstAvailableCoach = GetFirstAvailableCoach(reservationRequest, topologie);
-            var seats = SelectSeatsToBook(reservationRequest, firstAvailableCoach);
-            var reservation = MakeReservation(request, seats);
+            var seats = SelectSeatsToBook(reservationRequest, firstAvailableCoach).ToList();
+            var reservation = MakeReservation(reservationRequest, seats);
             
             return SerializeReservationResponse(reservation);
         }
@@ -46,7 +46,7 @@ namespace KataTrainReservation
             return coachesByCoachId;
         }
 
-        private ReservationResponseDto MakeReservation(ReservationRequestDto request, List<SeatDto> seats)
+        private ReservationResponseDto MakeReservation(ReservationRequest request, List<Seat> seats)
         {
             if (seats.Count == 0)
             {
@@ -70,13 +70,11 @@ namespace KataTrainReservation
                    "}";
         }
 
-        private static List<SeatDto> SelectSeatsToBook(ReservationRequest request, Coach? firstAvailableCoach)
+        private static IEnumerable<Seat> SelectSeatsToBook(ReservationRequest request, Coach? firstAvailableCoach)
         {
            return (firstAvailableCoach?.Seats ?? new List<Seat>()) 
                 .Where(seat => seat.IsAvailable)
-                .Take(request.SeatCount)
-                .Select(seat => new SeatDto(seat.Id.CoachNumber, seat.Id.SeatNumber))
-                .ToList();
+                .Take(request.SeatCount);
         }
 
         private static Coach? GetFirstAvailableCoach(
