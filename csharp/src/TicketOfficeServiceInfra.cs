@@ -77,10 +77,12 @@ namespace KataTrainReservation
         {
             var topologie = new Topologie(coachesByCoachId.Values.Select(coachDto =>
             {
-                var coach = new Coach(coachDto.Select(
-                                seatDto=>new Seat(new SeatId(seatDto.seat_number, seatDto.coach), IsSeatAvailable(seatDto))).ToList());
-                return coach;
+                return new Coach(
+                    coachDto.Select(seatDto=> seatDto.ToSeat())
+                        .ToList());
             }).ToList());
+            
+            
             return coachesByCoachId
                 .FirstOrDefault(coach =>
                 {
