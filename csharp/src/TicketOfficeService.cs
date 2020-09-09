@@ -32,20 +32,21 @@ namespace KataTrainReservation
 
         private string BookSeats(ReservationRequestDto request, List<Seat> seats)
         {
-            ReservationResponseDto reservation;
+            var reservation = MakeReservation(request, seats);
+            return SerializeReservationResponse(reservation);
+        }
+
+        private ReservationResponseDto MakeReservation(ReservationRequestDto request, List<Seat> seats)
+        {
             if (seats.Count == 0)
             {
-                reservation = new ReservationResponseDto(request.TrainId,seats,String.Empty);
+                return ReservationResponseDto.Failed(request.TrainId);
             }
-            else
-            {
-                var bookingReference = bookingReferenceClient.GenerateBookingReference();
-                reservation = new ReservationResponseDto(request.TrainId, seats, bookingReference);
-                bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
-            }
-            
-            return SerializeReservationResponse(reservation);
-            
+
+            var bookingReference = bookingReferenceClient.GenerateBookingReference();
+            var reservation = ReservationResponseDto.Success(request.TrainId, seats, bookingReference);
+            bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
+            return reservation;
         }
 
         private static string SerializeReservationResponse(ReservationResponseDto reservation)
@@ -57,19 +58,6 @@ namespace KataTrainReservation
                        reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
                    "]" +
                    "}";
-        }
-
-        private List<Seat> GetSeats(ReservationRequestDto request)
-        {
-            string data = trainDataClient.GetTopology(request.TrainId);
-
-            var coachesByCoachId = DeserializeInToTopologie(data);
-
-            var firstAvailableCoach = GetFirstAvailableCoach(request, coachesByCoachId);
-
-            var seats = SelectSeatsToBook(request, firstAvailableCoach);
-
-            return seats;
         }
 
         private static List<Seat> SelectSeatsToBook(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach)
