@@ -32,22 +32,31 @@ namespace KataTrainReservation
 
         private string BookSeats(ReservationRequestDto request, List<Seat> seats)
         {
-            if (!(seats.Count == 0))
+            ReservationResponseDto reservation;
+            if (seats.Count == 0)
             {
-                ReservationResponseDto reservation =
-                    new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
-                bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
-                return "{" +
-                       "\"train_id\": \"" + reservation.TrainId + "\", " +
-                       "\"booking_reference\": \"" + reservation.BookingId + "\", " +
-                       "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
-                       "]" +
-                       "}";
+                reservation = new ReservationResponseDto(request.TrainId,seats,String.Empty);
             }
             else
             {
-                return "{\"train_id\": \"" + request.TrainId + "\", \"booking_reference\": \"\", \"seats\": []}";
+                var bookingReference = bookingReferenceClient.GenerateBookingReference();
+                reservation = new ReservationResponseDto(request.TrainId, seats, bookingReference);
+                bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
             }
+            
+            return SerializeReservationResponse(reservation);
+            
+        }
+
+        private static string SerializeReservationResponse(ReservationResponseDto reservation)
+        {
+            return "{" +
+                   "\"train_id\": \"" + reservation.TrainId + "\", " +
+                   "\"booking_reference\": \"" + reservation.BookingId + "\", " +
+                   "\"seats\": [" + String.Join(", ",
+                       reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
+                   "]" +
+                   "}";
         }
 
         private List<Seat> GetSeats(ReservationRequestDto request)
