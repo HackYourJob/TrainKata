@@ -23,8 +23,10 @@ namespace KataTrainReservation
         {
             var topologie = GetTopologie(request);
 
+            var reservationRequest = request.ToReservationRequest();
+            
             var firstAvailableCoach = GetFirstAvailableCoach(request, topologie);
-            var seats = SelectSeatsToBook(request, firstAvailableCoach);
+            var seats = SelectSeatsToBook(reservationRequest, firstAvailableCoach);
             var reservation = MakeReservation(request, seats);
             
             return SerializeReservationResponse(reservation);
@@ -62,7 +64,7 @@ namespace KataTrainReservation
                    "}";
         }
 
-        private static List<SeatDto> SelectSeatsToBook(ReservationRequestDto request, Coach? firstAvailableCoach)
+        private static List<SeatDto> SelectSeatsToBook(ReservationRequest request, Coach? firstAvailableCoach)
         {
            return (firstAvailableCoach?.Seats ?? new List<Seat>()) 
                 .Where(seat => seat.IsAvailable)

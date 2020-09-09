@@ -16,5 +16,10 @@ namespace KataTrainReservation
             this.TrainId = trainId;
             this.SeatCount = seatCount;
         }
+
+        public ReservationRequest ToReservationRequest()
+        {
+            return new ReservationRequest(new TrainId(TrainId), SeatCount);
+        }
     }
 }
