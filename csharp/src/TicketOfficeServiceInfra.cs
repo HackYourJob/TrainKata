@@ -7,13 +7,13 @@ using Newtonsoft.Json;
 
 namespace KataTrainReservation
 {
-    public class TicketOfficeService
+    public partial class TicketOfficeServiceInfra
     {
 
-        private ITrainDataClient trainDataClient;
-        private IBookingReferenceClient bookingReferenceClient;
+        private readonly ITrainDataClient trainDataClient;
+        private readonly IBookingReferenceClient bookingReferenceClient;
 
-        public TicketOfficeService(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
+        public TicketOfficeServiceInfra(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
         {
             this.trainDataClient = trainDataClient;
             this.bookingReferenceClient = bookingReferenceClient;
@@ -21,22 +21,24 @@ namespace KataTrainReservation
 
         public String MakeReservation(ReservationRequestDto request)
         {
-            string data = trainDataClient.GetTopology(request.TrainId);
+            var topologie = GetTopologie(request);
 
-            var coachesByCoachId = DeserializeInToTopologie(data);
-
-            var firstAvailableCoach = GetFirstAvailableCoach(request, coachesByCoachId);
+            var firstAvailableCoach = GetFirstAvailableCoach(request, topologie);
             var seats = SelectSeatsToBook(request, firstAvailableCoach);
-            return BookSeats(request, seats);
-        }
-
-        private string BookSeats(ReservationRequestDto request, List<Seat> seats)
-        {
             var reservation = MakeReservation(request, seats);
+            
             return SerializeReservationResponse(reservation);
         }
 
-        private ReservationResponseDto MakeReservation(ReservationRequestDto request, List<Seat> seats)
+        private Dictionary<string, List<TopologieDto.TopologieSeatDto>> GetTopologie(ReservationRequestDto request)
+        {
+            string data = trainDataClient.GetTopology(request.TrainId);
+
+            var coachesByCoachId = DeserializeInToTopologie(data);
+            return coachesByCoachId;
+        }
+
+        private ReservationResponseDto MakeReservation(ReservationRequestDto request, List<SeatDto> seats)
         {
             if (seats.Count == 0)
             {
@@ -60,17 +62,25 @@ namespace KataTrainReservation
                    "}";
         }
 
-        private static List<Seat> SelectSeatsToBook(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach)
+        private static List<SeatDto> SelectSeatsToBook(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach)
         {
            return (firstAvailableCoach.Value ?? new List<TopologieDto.TopologieSeatDto>())
                 .Where(IsSeatAvailable)
                 .Take(request.SeatCount)
-                .Select(seat => new Seat(seat.coach, seat.seat_number))
+                .Select(seat => new SeatDto(seat.coach, seat.seat_number))
                 .ToList();
         }
 
-        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> GetFirstAvailableCoach(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> coachesByCoachId)
+        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> GetFirstAvailableCoach(
+            ReservationRequestDto request, 
+            Dictionary<string, List<TopologieDto.TopologieSeatDto>> coachesByCoachId)
         {
+            var topologie = new Topologie(coachesByCoachId.Values.Select(coachDto =>
+            {
+                var coach = new Coach(coachDto.Select(
+                                seatDto=>new Seat(new SeatId(seatDto.seat_number, seatDto.coach), IsSeatAvailable(seatDto))).ToList());
+                return coach;
+            }).ToList());
             return coachesByCoachId
                 .FirstOrDefault(coach =>
                 {

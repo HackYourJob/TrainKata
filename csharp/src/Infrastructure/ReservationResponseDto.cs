@@ -10,23 +10,23 @@ namespace KataTrainReservation
     {
         public string TrainId { get; private set; }
         public string BookingId { get; private set; }
-        public List<Seat> Seats { get; private set; }
+        public List<SeatDto> Seats { get; private set; }
 
-        private ReservationResponseDto(string trainId, List<Seat> seats, string bookingReference)
+        private ReservationResponseDto(string trainId, List<SeatDto> seats, string bookingReference)
         {
             this.TrainId = trainId;
             this.BookingId = bookingReference;
             this.Seats = seats;
         }
 
-        public static ReservationResponseDto Success(string trainId, List<Seat> seats, string bookingReference)
+        public static ReservationResponseDto Success(string trainId, List<SeatDto> seats, string bookingReference)
         {
             return new ReservationResponseDto(trainId, seats, bookingReference);
         }
 
         public static ReservationResponseDto Failed(string trainId)
         {
-            return new ReservationResponseDto(trainId, new List<Seat>(), String.Empty);
+            return new ReservationResponseDto(trainId, new List<SeatDto>(), String.Empty);
         }
         
         public override string ToString()
