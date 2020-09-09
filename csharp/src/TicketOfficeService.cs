@@ -21,43 +21,7 @@ namespace KataTrainReservation
 
         public String MakeReservation(ReservationRequestDto request)
         {
-            string data = trainDataClient.GetTopology(request.TrainId);
-
-            Dictionary<String, List<Topologie.TopologieSeat>> map = new Dictionary<string, List<Topologie.TopologieSeat>>();
-            foreach (Topologie.TopologieSeat x in JsonConvert.DeserializeObject<Topologie>(data).seats.Values)
-            {
-                if (!map.ContainsKey(x.coach)) map.Add(x.coach, new List<Topologie.TopologieSeat>());
-                map[x.coach].Add(x);
-            }
-            KeyValuePair<string, List<Topologie.TopologieSeat>> found = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
-            foreach (KeyValuePair<string, List<Topologie.TopologieSeat>> x in map)
-            {
-                long count = 0L;
-                foreach (Topologie.TopologieSeat y in x.Value)
-                {
-                    if ("".Equals(y.booking_reference)) {
-                        count++;
-                    }
-                }
-                if (count >= request.SeatCount) {
-                    found = x;
-                    break;
-                }
-            }
-            List<Seat> seats = new List<Seat>();
-            if(!found.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
-                List<Seat> list = new List<Seat>();
-                long limit = request.SeatCount;
-                foreach (Topologie.TopologieSeat y in found.Value)
-                {
-                    if ("".Equals(y.booking_reference)) {
-                        if (limit-- == 0) break;
-                        Seat seat = new Seat(y.coach, y.seat_number);
-                        list.Add(seat);
-                    }
-                }
-                seats = list;
-            }
+            var seats = GetSeats(request);
 
             if (!(seats.Count == 0)) {
                 ReservationResponseDto reservation = new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
@@ -70,6 +34,56 @@ namespace KataTrainReservation
             } else {
                 return "{\"train_id\": \"" + request.TrainId + "\", \"booking_reference\": \"\", \"seats\": []}";
             }
+        }
+
+        private List<Seat> GetSeats(ReservationRequestDto request)
+        {
+            string data = trainDataClient.GetTopology(request.TrainId);
+
+            Dictionary<String, List<TopologieDto.TopologieSeatDto>> coachesByCoachId =
+                new Dictionary<string, List<TopologieDto.TopologieSeatDto>>();
+            foreach (TopologieDto.TopologieSeatDto x in JsonConvert.DeserializeObject<TopologieDto>(data).seats.Values)
+            {
+                if (!coachesByCoachId.ContainsKey(x.coach)) coachesByCoachId.Add(x.coach, new List<TopologieDto.TopologieSeatDto>());
+                coachesByCoachId[x.coach].Add(x);
+            }
+
+            KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach =
+                default(KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>);
+            foreach (KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> coach in coachesByCoachId)
+            {
+                long availableSeats = 0L;
+                foreach (TopologieDto.TopologieSeatDto y in coach.Value)
+                {
+                    if ("".Equals(y.booking_reference))
+                    {
+                        availableSeats++;
+                    }
+                }
+
+                if (availableSeats >= request.SeatCount)
+                {
+                    firstAvailableCoach = coach;
+                    break;
+                }
+            }
+
+            List<Seat> seats = new List<Seat>();
+            if (!firstAvailableCoach.Equals(default(KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>)))
+            {
+                long limit = request.SeatCount;
+                foreach (TopologieDto.TopologieSeatDto y in firstAvailableCoach.Value)
+                {
+                    if ("".Equals(y.booking_reference))
+                    {
+                        if (limit-- == 0) break;
+                        Seat seat = new Seat(y.coach, y.seat_number);
+                        seats.Add(seat);
+                    }
+                }
+            }
+
+            return seats;
         }
     }
 }
