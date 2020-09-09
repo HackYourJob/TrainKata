@@ -92,9 +92,9 @@ namespace TrainKata.Tests
             Assert.False(bookingReferenceClient.Booked);
         }
 
-        private TicketOfficeServiceInfra BuildTicketOfficeService(string topologies, IBookingReferenceClient bookingReferenceClient)
+        private MakeReservationAdapter BuildTicketOfficeService(string topologies, IBookingReferenceClient bookingReferenceClient)
         {
-            return new TicketOfficeServiceInfra(new TrainDataClientStub(topologies), bookingReferenceClient);
+            return new MakeReservationAdapter(new TrainDataClientStub(topologies), bookingReferenceClient);
         }
 
         private class BookingReferenceClientStub : IBookingReferenceClient
