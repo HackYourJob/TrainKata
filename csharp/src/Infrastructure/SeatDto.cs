@@ -21,6 +21,11 @@ namespace KataTrainReservation
         {
         }
 
+        public SeatDto(SeatId seatId)
+            : this(seatId.CoachNumber, seatId.SeatNumber)
+        {
+        }
+
         public override int GetHashCode()
         {
             return base.GetHashCode();

@@ -12,11 +12,13 @@ namespace KataTrainReservation
 
         private readonly ITrainDataClient trainDataClient;
         private readonly IBookingReferenceClient bookingReferenceClient;
+        private BookingTrainAdapter _bookingTrain;
 
         public TicketOfficeServiceInfra(ITrainDataClient trainDataClient, IBookingReferenceClient bookingReferenceClient)
         {
             this.trainDataClient = trainDataClient;
             this.bookingReferenceClient = bookingReferenceClient;
+            _bookingTrain = new BookingTrainAdapter(bookingReferenceClient);
         }
 
         public String MakeReservation(ReservationRequestDto request)
@@ -53,12 +55,8 @@ namespace KataTrainReservation
                 return default;
             }
 
-            var bookingReference = bookingReferenceClient.GenerateBookingReference();
-            bookingReferenceClient.BookTrain(request.TrainId.Id,
-                bookingReference,
-                seats.Select(seat=> new SeatDto(seat))
-                .ToList());
-            return new Reservation(request.TrainId, new BookingReference(bookingReference), seats.Select(seat=>seat.Id));
+            var bookingReference = _bookingTrain.Book(request.TrainId, seats.Select(seat=>seat.Id).ToList());
+            return new Reservation(request.TrainId, bookingReference, seats.Select(seat=>seat.Id));
         }
 
         private static string SerializeReservationResponse(ReservationResponseDto reservation)
