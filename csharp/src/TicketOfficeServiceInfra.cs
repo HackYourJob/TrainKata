@@ -62,16 +62,16 @@ namespace KataTrainReservation
                    "}";
         }
 
-        private static List<SeatDto> SelectSeatsToBook(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach)
+        private static List<SeatDto> SelectSeatsToBook(ReservationRequestDto request, Coach? firstAvailableCoach)
         {
-           return (firstAvailableCoach.Value ?? new List<TopologieDto.TopologieSeatDto>())
-                .Where(IsSeatAvailable)
+           return (firstAvailableCoach?.Seats ?? new List<Seat>()) 
+                .Where(seat => seat.IsAvailable)
                 .Take(request.SeatCount)
-                .Select(seat => new SeatDto(seat.coach, seat.seat_number))
+                .Select(seat => new SeatDto(seat.Id.CoachNumber, seat.Id.SeatNumber))
                 .ToList();
         }
 
-        private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> GetFirstAvailableCoach(
+        private static Coach? GetFirstAvailableCoach(
             ReservationRequestDto request, 
             Dictionary<string, List<TopologieDto.TopologieSeatDto>> coachesByCoachId)
         {
@@ -83,11 +83,11 @@ namespace KataTrainReservation
             }).ToList());
             
             
-            return coachesByCoachId
+            return topologie.Coaches
                 .FirstOrDefault(coach =>
                 {
-                    var seats = coach.Value;
-                    return seats.Count(IsSeatAvailable) >= request.SeatCount;
+                    var seats = coach.Seats;
+                    return seats.Count(seat => seat.IsAvailable) >= request.SeatCount;
                 });
         }
 
