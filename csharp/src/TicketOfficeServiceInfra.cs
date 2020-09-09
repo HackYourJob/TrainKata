@@ -21,11 +21,17 @@ namespace KataTrainReservation
 
         public String MakeReservation(ReservationRequestDto request)
         {
-            var topologie = GetTopologie(request);
+            var topologieDto = GetTopologie(request);
 
             var reservationRequest = request.ToReservationRequest();
+            var topologie = new Topologie(topologieDto.Values.Select(coachDto =>
+            {
+                return new Coach(
+                    coachDto.Select(seatDto=> seatDto.ToSeat())
+                        .ToList());
+            }).ToList());
             
-            var firstAvailableCoach = GetFirstAvailableCoach(request, topologie);
+            var firstAvailableCoach = GetFirstAvailableCoach(reservationRequest, topologie);
             var seats = SelectSeatsToBook(reservationRequest, firstAvailableCoach);
             var reservation = MakeReservation(request, seats);
             
@@ -74,17 +80,9 @@ namespace KataTrainReservation
         }
 
         private static Coach? GetFirstAvailableCoach(
-            ReservationRequestDto request, 
-            Dictionary<string, List<TopologieDto.TopologieSeatDto>> coachesByCoachId)
+            ReservationRequest request, 
+            Topologie topologie)
         {
-            var topologie = new Topologie(coachesByCoachId.Values.Select(coachDto =>
-            {
-                return new Coach(
-                    coachDto.Select(seatDto=> seatDto.ToSeat())
-                        .ToList());
-            }).ToList());
-            
-            
             return topologie.Coaches
                 .FirstOrDefault(coach =>
                 {
