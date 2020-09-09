@@ -21,17 +21,31 @@ namespace KataTrainReservation
 
         public String MakeReservation(ReservationRequestDto request)
         {
-            var seats = GetSeats(request);
+            string data = trainDataClient.GetTopology(request.TrainId);
 
-            if (!(seats.Count == 0)) {
-                ReservationResponseDto reservation = new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
+            var coachesByCoachId = DeserializeInToTopologie(data);
+
+            var firstAvailableCoach = GetFirstAvailableCoach(request, coachesByCoachId);
+            var seats = SelectSeatsToBook(request, firstAvailableCoach);
+            return BookSeats(request, seats);
+        }
+
+        private string BookSeats(ReservationRequestDto request, List<Seat> seats)
+        {
+            if (!(seats.Count == 0))
+            {
+                ReservationResponseDto reservation =
+                    new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
                 bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
                 return "{" +
-                        "\"train_id\": \"" + reservation.TrainId + "\", " +
-                        "\"booking_reference\": \"" + reservation.BookingId + "\", " +
-                        "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) + "]" +
-                        "}";
-            } else {
+                       "\"train_id\": \"" + reservation.TrainId + "\", " +
+                       "\"booking_reference\": \"" + reservation.BookingId + "\", " +
+                       "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
+                       "]" +
+                       "}";
+            }
+            else
+            {
                 return "{\"train_id\": \"" + request.TrainId + "\", \"booking_reference\": \"\", \"seats\": []}";
             }
         }
@@ -44,22 +58,18 @@ namespace KataTrainReservation
 
             var firstAvailableCoach = GetFirstAvailableCoach(request, coachesByCoachId);
 
-            List<Seat> seats = new List<Seat>();
-            if (!firstAvailableCoach.Equals(default(KeyValuePair<string, List<TopologieDto.TopologieSeatDto>>)))
-            {
-                long limit = request.SeatCount;
-                foreach (TopologieDto.TopologieSeatDto seatDto in firstAvailableCoach.Value)
-                {
-                    if (IsSeatAvailable(seatDto))
-                    {
-                        if (limit-- == 0) break;
-                        Seat seat = new Seat(seatDto.coach, seatDto.seat_number);
-                        seats.Add(seat);
-                    }
-                }
-            }
+            var seats = SelectSeatsToBook(request, firstAvailableCoach);
 
             return seats;
+        }
+
+        private static List<Seat> SelectSeatsToBook(ReservationRequestDto request, KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> firstAvailableCoach)
+        {
+           return (firstAvailableCoach.Value ?? new List<TopologieDto.TopologieSeatDto>())
+                .Where(IsSeatAvailable)
+                .Take(request.SeatCount)
+                .Select(seat => new Seat(seat.coach, seat.seat_number))
+                .ToList();
         }
 
         private static KeyValuePair<string, List<TopologieDto.TopologieSeatDto>> GetFirstAvailableCoach(ReservationRequestDto request, Dictionary<string, List<TopologieDto.TopologieSeatDto>> coachesByCoachId)
