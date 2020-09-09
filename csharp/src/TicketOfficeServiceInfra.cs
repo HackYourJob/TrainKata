@@ -35,7 +35,7 @@ namespace KataTrainReservation
             var seats = SelectSeatsToBook(reservationRequest, firstAvailableCoach).ToList();
             var reservation = MakeReservation(reservationRequest, seats);
             
-            return SerializeReservationResponse(reservation);
+            return SerializeReservationResponse(ReservationResponseDto.FromReservation(reservationRequest,reservation));
         }
 
         private Dictionary<string, List<TopologieDto.TopologieSeatDto>> GetTopologie(ReservationRequestDto request)
@@ -46,17 +46,17 @@ namespace KataTrainReservation
             return coachesByCoachId;
         }
 
-        private ReservationResponseDto MakeReservation(ReservationRequest request, List<Seat> seats)
+        private Reservation? MakeReservation(ReservationRequest request, List<Seat> seats)
         {
             if (seats.Count == 0)
             {
-                return ReservationResponseDto.Failed(request.TrainId);
+                return default;
             }
 
             var bookingReference = bookingReferenceClient.GenerateBookingReference();
             var reservation = ReservationResponseDto.Success(request.TrainId, seats, bookingReference);
             bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
-            return reservation;
+            return new Reservation(request.TrainId, new BookingReference(bookingReference), seats.Select(seat=>seat.Id));
         }
 
         private static string SerializeReservationResponse(ReservationResponseDto reservation)

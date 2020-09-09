@@ -11,14 +11,4 @@ namespace KataTrainReservation
             this.SeatCount = seatCount;
         }
     }
-
-    public struct TrainId
-    {
-        public TrainId(string id)
-        {
-            Id = id;
-        }
-
-        public string Id { get; }
-    }
 }
