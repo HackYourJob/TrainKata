@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace KataTrainReservation
 {
-    public partial class TicketOfficeServiceInfra
+    public class TicketOfficeServiceInfra
     {
 
         private readonly ITrainDataClient trainDataClient;
@@ -54,8 +54,10 @@ namespace KataTrainReservation
             }
 
             var bookingReference = bookingReferenceClient.GenerateBookingReference();
-            var reservation = ReservationResponseDto.Success(request.TrainId, seats, bookingReference);
-            bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
+            bookingReferenceClient.BookTrain(request.TrainId.Id,
+                bookingReference,
+                seats.Select(seat=> new SeatDto(seat))
+                .ToList());
             return new Reservation(request.TrainId, new BookingReference(bookingReference), seats.Select(seat=>seat.Id));
         }
 
