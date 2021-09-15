@@ -1,4 +1,4 @@
-package infra;
+package ui;
 
 import domain.ReservationRequest;
 import domain.SeatCount;

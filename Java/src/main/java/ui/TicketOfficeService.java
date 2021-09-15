@@ -1,9 +1,8 @@
-package infra;
+package ui;
 
 import domain.*;
 import domain.in.MakeReservation;
 import infra.BookingReferenceClient;
-import infra.ReservationRequestDto;
 import infra.TrainDataClient;
 import infra.booking_reference_client.BookingReferenceAdapter;
 import infra.train_data_client.GetTopologieAdapter;
