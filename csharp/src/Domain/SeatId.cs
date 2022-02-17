@@ -1,4 +1,4 @@
-namespace KataTrainReservation.Domain
+namespace TrainKata.Domain
 {
     public struct SeatId
     {
@@ -9,6 +9,11 @@ namespace KataTrainReservation.Domain
         {
             CoachId = coachId;
             SeatNumber = seatNumber;
+        }
+
+        public override string ToString()
+        {
+            return $"{SeatNumber}{CoachId}";
         }
     }
 }

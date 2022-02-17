@@ -1,10 +1,10 @@
 namespace TrainKata.Domain;
 
-public struct CoachId
+public struct BookingReference
 {
     public string Value { get; }
 
-    public CoachId(string value)
+    public BookingReference(string value)
     {
         Value = value;
     }

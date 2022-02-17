@@ -1,4 +1,4 @@
-namespace KataTrainReservation.Domain;
+namespace TrainKata.Domain;
 
 public struct SeatNumber
 {
@@ -7,5 +7,10 @@ public struct SeatNumber
     public SeatNumber(int number)
     {
         Number = number;
+    }
+
+    public override string ToString()
+    {
+        return Number.ToString();
     }
 }

@@ -1,20 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TrainKata.Domain;
 
-namespace KataTrainReservation
+namespace TrainKata.Infra
 {
-    public class Seat
+    public class SeatDto
     {
         public string Coach { get; private set; }
         public int SeatNumber { get; private set; }
 
-        public Seat(string coach, int seatNumber)
+        public SeatDto(string coach, int seatNumber)
         {
             this.Coach = coach;
             this.SeatNumber = seatNumber;
+        }
+
+        public SeatDto(SeatId s)
+            : this(s.CoachId.Value, s.SeatNumber.Number)
+        {
         }
 
         public override int GetHashCode()
@@ -27,9 +28,14 @@ namespace KataTrainReservation
         /// </summary>
         public override bool Equals(object obj)
         {
-            Seat other = obj as Seat;
+            SeatDto other = obj as SeatDto;
 
             return this.Coach == other.Coach && this.SeatNumber == other.SeatNumber;
+        }
+
+        public SeatId ToDomain()
+        {
+            return new SeatId(new CoachId(Coach), new SeatNumber(SeatNumber));
         }
     }
 }

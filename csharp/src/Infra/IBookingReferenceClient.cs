@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
-namespace KataTrainReservation
+namespace TrainKata.Infra
 {
     public interface IBookingReferenceClient
     {
         string GenerateBookingReference();
 
-        void BookTrain(string trainId, string bookingReference, List<Seat> seats);
+        void BookTrain(string trainId, string bookingReference, List<SeatDto> seats);
     }
 }
