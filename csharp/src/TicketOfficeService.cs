@@ -21,53 +21,95 @@ namespace KataTrainReservation
 
         public String MakeReservation(ReservationRequestDto request)
         {
-            string data = trainDataClient.GetTopology(request.TrainId);
+            var seatsByCoachId = GetTopology(request);
+            
+            var selectedCoach = SelectCoach(request, seatsByCoachId);
+            
+            var seats = SelectSeats(request, selectedCoach);
 
-            Dictionary<String, List<Topologie.TopologieSeat>> map = new Dictionary<string, List<Topologie.TopologieSeat>>();
-            foreach (Topologie.TopologieSeat x in JsonConvert.DeserializeObject<Topologie>(data).seats.Values)
+            return BookingSeats(request, seats);
+        }
+
+        private Dictionary<string, List<Topologie.TopologieSeat>> GetTopology(ReservationRequestDto request)
+        {
+            var serializedTopology = trainDataClient.GetTopology(request.TrainId);
+
+            var seatsByCoachId = new Dictionary<string, List<Topologie.TopologieSeat>>();
+            foreach (var seat in JsonConvert.DeserializeObject<Topologie>(serializedTopology).seats.Values)
             {
-                if (!map.ContainsKey(x.coach)) map.Add(x.coach, new List<Topologie.TopologieSeat>());
-                map[x.coach].Add(x);
+                if (!seatsByCoachId.ContainsKey(seat.coach))
+                    seatsByCoachId.Add(seat.coach, new List<Topologie.TopologieSeat>());
+                seatsByCoachId[seat.coach].Add(seat);
             }
-            KeyValuePair<string, List<Topologie.TopologieSeat>> found = default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
-            foreach (KeyValuePair<string, List<Topologie.TopologieSeat>> x in map)
+
+            return seatsByCoachId;
+        }
+
+        private static KeyValuePair<string, List<Topologie.TopologieSeat>> SelectCoach(ReservationRequestDto request, Dictionary<string, List<Topologie.TopologieSeat>> seatsByCoachId)
+        {
+            var selectedCoach =
+                default(KeyValuePair<string, List<Topologie.TopologieSeat>>);
+            foreach (var coach in seatsByCoachId)
             {
-                long count = 0L;
-                foreach (Topologie.TopologieSeat y in x.Value)
+                var freeSeat = 0L;
+                foreach (var seat in coach.Value)
                 {
-                    if ("".Equals(y.booking_reference)) {
-                        count++;
+                    if ("".Equals(seat.booking_reference))
+                    {
+                        freeSeat++;
                     }
                 }
-                if (count >= request.SeatCount) {
-                    found = x;
+
+                var askedSeatNbInReservation = request.SeatCount;
+                if (freeSeat >= askedSeatNbInReservation)
+                {
+                    selectedCoach = coach;
                     break;
                 }
             }
-            List<Seat> seats = new List<Seat>();
-            if(!found.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>))) {
-                List<Seat> list = new List<Seat>();
+
+            return selectedCoach;
+        }
+
+        private static List<Seat> SelectSeats(ReservationRequestDto request, KeyValuePair<string, List<Topologie.TopologieSeat>> selectedCoach)
+        {
+            var seats = new List<Seat>();
+            if (!selectedCoach.Equals(default(KeyValuePair<string, List<Topologie.TopologieSeat>>)))
+            {
+                var selectedSeats = new List<Seat>();
                 long limit = request.SeatCount;
-                foreach (Topologie.TopologieSeat y in found.Value)
+                foreach (var seat in selectedCoach.Value)
                 {
-                    if ("".Equals(y.booking_reference)) {
+                    if ("".Equals(seat.booking_reference))
+                    {
                         if (limit-- == 0) break;
-                        Seat seat = new Seat(y.coach, y.seat_number);
-                        list.Add(seat);
+                        var selectedSeat = new Seat(seat.coach, seat.seat_number);
+                        selectedSeats.Add(selectedSeat);
                     }
                 }
-                seats = list;
+
+                seats = selectedSeats;
             }
 
-            if (!(seats.Count == 0)) {
-                ReservationResponseDto reservation = new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
+            return seats;
+        }
+
+        private string BookingSeats(ReservationRequestDto request, List<Seat> seats)
+        {
+            if (seats.Any())
+            {
+                var reservation =
+                    new ReservationResponseDto(request.TrainId, seats, bookingReferenceClient.GenerateBookingReference());
                 bookingReferenceClient.BookTrain(reservation.TrainId, reservation.BookingId, reservation.Seats);
                 return "{" +
-                        "\"train_id\": \"" + reservation.TrainId + "\", " +
-                        "\"booking_reference\": \"" + reservation.BookingId + "\", " +
-                        "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) + "]" +
-                        "}";
-            } else {
+                       "\"train_id\": \"" + reservation.TrainId + "\", " +
+                       "\"booking_reference\": \"" + reservation.BookingId + "\", " +
+                       "\"seats\": [" + String.Join(", ", reservation.Seats.Select(s => "\"" + s.SeatNumber + s.Coach + "\"")) +
+                       "]" +
+                       "}";
+            }
+            else
+            {
                 return "{\"train_id\": \"" + request.TrainId + "\", \"booking_reference\": \"\", \"seats\": []}";
             }
         }
